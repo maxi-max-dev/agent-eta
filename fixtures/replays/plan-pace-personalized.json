@@ -1,0 +1,130 @@
+{
+  "id": "plan-pace-personalized",
+  "title": "计划节奏：24 轮后的个性化",
+  "description": "工作结构与冷启动场景相同，但注入 24 条冻结的快速历史作为个性化依据。",
+  "seed": 202,
+  "historyProfile": "experienced-fast",
+  "events": [
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "pace-personal-01",
+      "run_id": "run-pace-personalized",
+      "provider": "claude",
+      "native_session_id": "fixture-pace-personalized",
+      "occurred_at": "2026-08-29T06:00:00.000Z",
+      "observed_at": "2026-08-29T06:00:00.050Z",
+      "kind": "run_started",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": {
+        "task_class": "implementation",
+        "model_family": "claude-demo",
+        "project_id": "agent-eta-demo",
+        "user_id": "fixture-user",
+        "model_self_eta_minutes": 25
+      }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "pace-personal-02",
+      "run_id": "run-pace-personalized",
+      "provider": "claude",
+      "native_session_id": "fixture-pace-personalized",
+      "occurred_at": "2026-08-29T06:00:05.000Z",
+      "observed_at": "2026-08-29T06:00:05.050Z",
+      "kind": "plan_declared",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": {
+        "revision": 1,
+        "steps": [
+          { "id": "inspect", "label": "检查项目", "class": "inspect", "status": "pending", "prior_minutes": 5 },
+          { "id": "edit", "label": "实现改动", "class": "edit", "status": "pending", "prior_minutes": 10 },
+          { "id": "test", "label": "运行验证", "class": "test", "status": "pending", "prior_minutes": 6 }
+        ]
+      }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "pace-personal-03",
+      "run_id": "run-pace-personalized",
+      "provider": "claude",
+      "native_session_id": "fixture-pace-personalized",
+      "occurred_at": "2026-08-29T06:00:10.000Z",
+      "observed_at": "2026-08-29T06:00:10.050Z",
+      "kind": "step_started",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": { "step_id": "inspect" }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "pace-personal-04",
+      "run_id": "run-pace-personalized",
+      "provider": "claude",
+      "native_session_id": "fixture-pace-personalized",
+      "occurred_at": "2026-08-29T06:02:10.000Z",
+      "observed_at": "2026-08-29T06:02:10.050Z",
+      "kind": "step_completed",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": { "step_id": "inspect" }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "pace-personal-05",
+      "run_id": "run-pace-personalized",
+      "provider": "claude",
+      "native_session_id": "fixture-pace-personalized",
+      "occurred_at": "2026-08-29T06:02:15.000Z",
+      "observed_at": "2026-08-29T06:02:15.050Z",
+      "kind": "step_started",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": { "step_id": "edit" }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "pace-personal-06",
+      "run_id": "run-pace-personalized",
+      "provider": "claude",
+      "native_session_id": "fixture-pace-personalized",
+      "occurred_at": "2026-08-29T06:06:15.000Z",
+      "observed_at": "2026-08-29T06:06:15.050Z",
+      "kind": "step_completed",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": { "step_id": "edit" }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "pace-personal-07",
+      "run_id": "run-pace-personalized",
+      "provider": "claude",
+      "native_session_id": "fixture-pace-personalized",
+      "occurred_at": "2026-08-29T06:06:20.000Z",
+      "observed_at": "2026-08-29T06:06:20.050Z",
+      "kind": "step_started",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": { "step_id": "test" }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "pace-personal-08",
+      "run_id": "run-pace-personalized",
+      "provider": "claude",
+      "native_session_id": "fixture-pace-personalized",
+      "occurred_at": "2026-08-29T06:09:20.000Z",
+      "observed_at": "2026-08-29T06:09:20.050Z",
+      "kind": "step_completed",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": { "step_id": "test" }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "pace-personal-09",
+      "run_id": "run-pace-personalized",
+      "provider": "claude",
+      "native_session_id": "fixture-pace-personalized",
+      "occurred_at": "2026-08-29T06:09:25.000Z",
+      "observed_at": "2026-08-29T06:09:25.050Z",
+      "kind": "run_succeeded",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": {}
+    }
+  ]
+}

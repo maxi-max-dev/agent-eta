@@ -1,0 +1,64 @@
+{
+  "id": "no-plan-fallback",
+  "title": "无计划：运行级兜底",
+  "description": "任务没有结构化计划；心跳事件推进有效用时，最终结果会被持久化。",
+  "seed": 101,
+  "historyProfile": "cold",
+  "events": [
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "no-plan-01",
+      "run_id": "run-no-plan",
+      "provider": "codex",
+      "native_session_id": "fixture-no-plan",
+      "occurred_at": "2026-08-29T01:00:00.000Z",
+      "observed_at": "2026-08-29T01:00:00.100Z",
+      "kind": "run_started",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": {
+        "reason": "任务开始，但没有原生计划",
+        "task_class": "implementation",
+        "model_family": "codex-demo",
+        "project_id": "agent-eta-demo",
+        "user_id": "fixture-user",
+        "model_self_eta_minutes": 18
+      }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "no-plan-02",
+      "run_id": "run-no-plan",
+      "provider": "codex",
+      "native_session_id": "fixture-no-plan",
+      "occurred_at": "2026-08-29T01:04:00.000Z",
+      "observed_at": "2026-08-29T01:04:00.100Z",
+      "kind": "heartbeat",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": {}
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "no-plan-03",
+      "run_id": "run-no-plan",
+      "provider": "codex",
+      "native_session_id": "fixture-no-plan",
+      "occurred_at": "2026-08-29T01:09:00.000Z",
+      "observed_at": "2026-08-29T01:09:00.100Z",
+      "kind": "heartbeat",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": {}
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "no-plan-04",
+      "run_id": "run-no-plan",
+      "provider": "codex",
+      "native_session_id": "fixture-no-plan",
+      "occurred_at": "2026-08-29T01:14:00.000Z",
+      "observed_at": "2026-08-29T01:14:00.100Z",
+      "kind": "run_succeeded",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": { "reason": "无计划任务已完成" }
+    }
+  ]
+}

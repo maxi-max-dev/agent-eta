@@ -1,0 +1,59 @@
+{
+  "name": "agentwhen",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "How long will your agent take? Local runtime estimates with a portable CLI, JavaScript SDK and agent skill.",
+  "scripts": {
+    "start": "node --no-warnings scripts/start-demo.js",
+    "test": "node --no-warnings --test --test-concurrency=1",
+    "evaluate": "node --no-warnings scripts/evaluate.js",
+    "evaluate:live": "node --no-warnings scripts/evaluate-live.js",
+    "evaluate:midrun": "node --no-warnings scripts/evaluate-midrun.js",
+    "evaluate:scopes": "node --no-warnings scripts/evaluate-scopes.js",
+    "evaluate:pilot": "node --no-warnings scripts/evaluate-pilot.js",
+    "evaluate:weekly": "node --no-warnings scripts/evaluate-weekly.js",
+    "report": "node --no-warnings scripts/report.js",
+    "report:codex": "node --no-warnings scripts/report-codex.js",
+    "accept:current": "node --no-warnings scripts/accept-current-codex.js",
+    "workset": "node --no-warnings scripts/workset.js",
+    "scan:live": "node --no-warnings scripts/scan-live.js --days=30",
+    "scan:live:import": "node --no-warnings scripts/scan-live.js --days=30 --import",
+    "start:live": "node --no-warnings src/server/main.js",
+    "demo": "node --no-warnings scripts/start-demo.js",
+    "cli": "node --no-warnings bin/agentwhen.js"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "license": "MIT",
+  "bin": {
+    "agentwhen": "bin/agentwhen.js"
+  },
+  "exports": {
+    ".": "./src/generic/tracker.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maxi-max-dev/agentwhen.git"
+  },
+  "homepage": "https://github.com/maxi-max-dev/agentwhen",
+  "bugs": {
+    "url": "https://github.com/maxi-max-dev/agentwhen/issues"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "public/",
+    "fixtures/",
+    "scripts/",
+    "skills/",
+    "docs/",
+    "README.md",
+    "README.zh-CN.md",
+    "LICENSE",
+    "CONTRIBUTING.md",
+    "ROADMAP.md",
+    "examples/"
+  ]
+}

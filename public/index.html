@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#dce5e8" />
+    <title>AgentWhen · 到达窗</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="masthead" aria-label="AgentWhen Demo">
+        <a class="wordmark" href="#arrival" aria-label="AgentWhen 到达窗">
+          <span class="wordmark-mark" aria-hidden="true"></span>
+          <span>AgentWhen</span>
+        </a>
+        <div class="source-switch" role="group" aria-label="选择 ETA 数据源">
+          <span class="source-switch-label">数据源</span>
+          <button class="source-option is-active" id="demo-mode" type="button" aria-pressed="true">
+            演示路线
+          </button>
+          <button class="source-option" id="live-mode" type="button" aria-pressed="false">
+            实时任务
+          </button>
+        </div>
+      </header>
+
+      <section class="arrival" id="arrival" aria-labelledby="eta-headline" aria-busy="true">
+        <div class="arrival-tools">
+          <div class="scope-switch" id="scope-switch" role="group" aria-label="选择 ETA 范围">
+            <button class="scope-option is-active" id="scope-run" type="button" data-scope="run" aria-pressed="true">本轮</button>
+            <button class="scope-option" id="scope-task" type="button" data-scope="task" aria-pressed="false">任务</button>
+            <button class="scope-option" id="scope-project" type="button" data-scope="project" aria-pressed="false">项目</button>
+          </div>
+          <label class="active-field" id="active-field" for="active-select" hidden>
+            <span>正在看</span>
+            <span class="select-wrap active-select-wrap">
+              <select id="active-select" aria-label="选择实时任务">
+                <option value="">等待真实任务</option>
+              </select>
+            </span>
+          </label>
+        </div>
+        <div class="arrival-lead">
+          <p class="eyebrow" id="arrival-eyebrow">预计到达 · 演示路线</p>
+          <h1 id="eta-headline" aria-live="polite">正在读取 ETA…</h1>
+          <p class="eta-remaining" id="eta-remaining">—</p>
+          <p class="eta-meta" aria-label="ETA 状态和证据">
+            <span id="eta-status">状态未知</span>
+            <span aria-hidden="true">·</span>
+            <span id="eta-confidence">证据：暂不可用</span>
+          </p>
+        </div>
+
+        <div class="window-block">
+          <div class="window-labels">
+            <span>到达窗口</span>
+            <strong id="eta-range">—</strong>
+          </div>
+          <div
+            class="arrival-track"
+            id="arrival-track"
+            role="img"
+            aria-label="到达窗口暂不可用"
+          >
+            <span class="track-line" aria-hidden="true"></span>
+            <span class="track-window" aria-hidden="true"></span>
+            <span class="track-eta" aria-hidden="true"></span>
+          </div>
+        </div>
+
+        <dl class="detail-list">
+          <div class="detail-row">
+            <dt>当前步骤</dt>
+            <dd id="current-step">—</dd>
+          </div>
+          <div class="detail-row detail-reason">
+            <dt>变化原因</dt>
+            <dd id="change-reason" aria-live="polite">等待首个事件</dd>
+          </div>
+        </dl>
+      </section>
+
+      <form class="replay" id="replay-controls">
+        <label class="fixture-field" for="fixture-select">
+          <span>演示场景</span>
+          <span class="select-wrap">
+            <select id="fixture-select" name="fixture" disabled>
+              <option>正在读取场景…</option>
+            </select>
+          </span>
+        </label>
+        <div class="replay-actions">
+          <button class="reset-button" id="reset-button" type="button" disabled>
+            从头回放
+          </button>
+          <button class="next-button" id="next-button" type="submit" disabled>
+            <span id="next-label">推进一个事件</span>
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M4 10h10m-4-4 4 4-4 4" />
+            </svg>
+          </button>
+        </div>
+      </form>
+
+      <section class="live-strip" id="live-controls" aria-label="实时任务监听状态" hidden>
+        <p class="watcher-meta" aria-live="polite">
+          <span class="watcher-kind" id="watcher-state" data-status="starting">
+            <i aria-hidden="true"></i><span>正在连接</span>
+          </span>
+          <time id="watcher-time">尚未采集</time>
+          <span class="watcher-caveat" id="watcher-detail">只显示本机结构化事件</span>
+        </p>
+        <button class="live-refresh" id="live-refresh" type="button">
+          立即刷新
+        </button>
+      </section>
+
+      <p class="error-message" id="error-message" role="alert" hidden></p>
+    </main>
+  </body>
+</html>

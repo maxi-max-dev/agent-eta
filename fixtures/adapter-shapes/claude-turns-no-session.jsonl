@@ -1,0 +1,2 @@
+{"type":"user","uuid":"no-session-human","parentUuid":null,"timestamp":"2026-08-29T02:00:00.000Z","isSidechain":false,"message":{"role":"user","content":"SANITIZED_NO_SESSION"}}
+{"type":"assistant","uuid":"no-session-done","parentUuid":"no-session-human","timestamp":"2026-08-29T02:01:00.000Z","isSidechain":false,"message":{"role":"assistant","stop_reason":"end_turn","content":[{"type":"text","text":"SANITIZED_NO_SESSION_FINAL"}]}}

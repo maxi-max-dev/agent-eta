@@ -1,0 +1,12 @@
+data/
+outputs/
+work/
+node_modules/
+.env
+.env.*
+*.sqlite
+*.sqlite-*
+*.log
+.DS_Store
+.agentwhen/
+*.tgz

@@ -1,0 +1,12 @@
+{
+  "schema_version": "agenteta.reporter/1",
+  "provider": "generic",
+  "run_id": "generic-run-fedcba9876543210abcd",
+  "reported_at": "2026-08-29T04:05:06.000Z",
+  "task_class": "other",
+  "eligible_large_task": false,
+  "model_self_eta_minutes": null,
+  "plan_present": false,
+  "plan_step_count": 0,
+  "plan_adherence": "not_applicable"
+}

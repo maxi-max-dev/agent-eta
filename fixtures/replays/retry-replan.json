@@ -1,0 +1,211 @@
+{
+  "id": "retry-replan",
+  "title": "测试失败：重试与重规划",
+  "description": "验证失败后触发重试，并通过新版计划加入诊断步骤。",
+  "seed": 303,
+  "historyProfile": "cold",
+  "events": [
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "replan-01",
+      "run_id": "run-replan",
+      "provider": "codex",
+      "native_session_id": "fixture-replan",
+      "occurred_at": "2026-08-29T03:00:00.000Z",
+      "observed_at": "2026-08-29T03:00:00.050Z",
+      "kind": "run_started",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": {
+        "task_class": "debugging",
+        "model_family": "codex-demo",
+        "project_id": "agent-eta-demo",
+        "user_id": "fixture-user",
+        "model_self_eta_minutes": 14
+      }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "replan-02",
+      "run_id": "run-replan",
+      "provider": "codex",
+      "native_session_id": "fixture-replan",
+      "occurred_at": "2026-08-29T03:00:05.000Z",
+      "observed_at": "2026-08-29T03:00:05.050Z",
+      "kind": "plan_declared",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": {
+        "revision": 1,
+        "steps": [
+          { "id": "inspect", "label": "检查", "class": "inspect", "status": "pending", "prior_minutes": 3 },
+          { "id": "edit", "label": "修改", "class": "edit", "status": "pending", "prior_minutes": 6 },
+          { "id": "test", "label": "测试", "class": "test", "status": "pending", "prior_minutes": 4 }
+        ]
+      }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "replan-03",
+      "run_id": "run-replan",
+      "provider": "codex",
+      "native_session_id": "fixture-replan",
+      "occurred_at": "2026-08-29T03:00:10.000Z",
+      "observed_at": "2026-08-29T03:00:10.050Z",
+      "kind": "step_started",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": { "step_id": "inspect" }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "replan-04",
+      "run_id": "run-replan",
+      "provider": "codex",
+      "native_session_id": "fixture-replan",
+      "occurred_at": "2026-08-29T03:02:10.000Z",
+      "observed_at": "2026-08-29T03:02:10.050Z",
+      "kind": "step_completed",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": { "step_id": "inspect" }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "replan-05",
+      "run_id": "run-replan",
+      "provider": "codex",
+      "native_session_id": "fixture-replan",
+      "occurred_at": "2026-08-29T03:02:15.000Z",
+      "observed_at": "2026-08-29T03:02:15.050Z",
+      "kind": "step_started",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": { "step_id": "edit" }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "replan-06",
+      "run_id": "run-replan",
+      "provider": "codex",
+      "native_session_id": "fixture-replan",
+      "occurred_at": "2026-08-29T03:07:15.000Z",
+      "observed_at": "2026-08-29T03:07:15.050Z",
+      "kind": "step_completed",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": { "step_id": "edit" }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "replan-07",
+      "run_id": "run-replan",
+      "provider": "codex",
+      "native_session_id": "fixture-replan",
+      "occurred_at": "2026-08-29T03:07:20.000Z",
+      "observed_at": "2026-08-29T03:07:20.050Z",
+      "kind": "step_started",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": { "step_id": "test" }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "replan-08",
+      "run_id": "run-replan",
+      "provider": "codex",
+      "native_session_id": "fixture-replan",
+      "occurred_at": "2026-08-29T03:10:20.000Z",
+      "observed_at": "2026-08-29T03:10:20.050Z",
+      "kind": "step_completed",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": { "step_id": "test", "outcome": "failed", "reason": "验证失败，需要重试" }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "replan-09",
+      "run_id": "run-replan",
+      "provider": "codex",
+      "native_session_id": "fixture-replan",
+      "occurred_at": "2026-08-29T03:10:25.000Z",
+      "observed_at": "2026-08-29T03:10:25.050Z",
+      "kind": "retry_started",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": { "step_id": "test", "reason": "测试失败，重试增加了工作量" }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "replan-10",
+      "run_id": "run-replan",
+      "provider": "codex",
+      "native_session_id": "fixture-replan",
+      "occurred_at": "2026-08-29T03:10:30.000Z",
+      "observed_at": "2026-08-29T03:10:30.050Z",
+      "kind": "plan_revised",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": {
+        "revision": 2,
+        "reason": "测试失败后加入诊断步骤",
+        "steps": [
+          { "id": "inspect", "label": "检查", "class": "inspect", "status": "completed", "prior_minutes": 3 },
+          { "id": "edit", "label": "修改", "class": "edit", "status": "completed", "prior_minutes": 6 },
+          { "id": "diagnose", "label": "诊断失败原因", "class": "inspect", "status": "pending", "prior_minutes": 5 },
+          { "id": "test", "label": "再次测试", "class": "test", "status": "in_progress", "prior_minutes": 4 }
+        ]
+      }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "replan-11",
+      "run_id": "run-replan",
+      "provider": "codex",
+      "native_session_id": "fixture-replan",
+      "occurred_at": "2026-08-29T03:10:35.000Z",
+      "observed_at": "2026-08-29T03:10:35.050Z",
+      "kind": "step_started",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": { "step_id": "diagnose" }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "replan-12",
+      "run_id": "run-replan",
+      "provider": "codex",
+      "native_session_id": "fixture-replan",
+      "occurred_at": "2026-08-29T03:14:35.000Z",
+      "observed_at": "2026-08-29T03:14:35.050Z",
+      "kind": "step_completed",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": { "step_id": "diagnose" }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "replan-13",
+      "run_id": "run-replan",
+      "provider": "codex",
+      "native_session_id": "fixture-replan",
+      "occurred_at": "2026-08-29T03:14:40.000Z",
+      "observed_at": "2026-08-29T03:14:40.050Z",
+      "kind": "step_started",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": { "step_id": "test" }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "replan-14",
+      "run_id": "run-replan",
+      "provider": "codex",
+      "native_session_id": "fixture-replan",
+      "occurred_at": "2026-08-29T03:17:40.000Z",
+      "observed_at": "2026-08-29T03:17:40.050Z",
+      "kind": "step_completed",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": { "step_id": "test" }
+    },
+    {
+      "schema_version": "agenteta.event/1",
+      "event_id": "replan-15",
+      "run_id": "run-replan",
+      "provider": "codex",
+      "native_session_id": "fixture-replan",
+      "occurred_at": "2026-08-29T03:17:45.000Z",
+      "observed_at": "2026-08-29T03:17:45.050Z",
+      "kind": "run_succeeded",
+      "source": { "adapter": "fixture-replay", "mode": "simulated_contract", "confidence": 1 },
+      "data": {}
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "schema_version": "agenteta.reporter/1",
+  "provider": "codex",
+  "run_id": "/Users/private/session.jsonl",
+  "reported_at": "2026-08-29T04:05:06.000Z",
+  "task_class": "coding",
+  "eligible_large_task": true,
+  "model_self_eta_minutes": 18.5,
+  "plan_present": true,
+  "plan_step_count": 4,
+  "plan_adherence": "following"
+}
