@@ -78,6 +78,10 @@ test('dashboard shows portable runs and journals refreshed predictions without s
   assert.equal((await fetch(`${base}/api/tracker/runs`, { method: 'POST' })).status, 405);
   const page = await (await fetch(base)).text();
   assert.match(page, /tracker.js/);
+  for (const asset of ['/tracker.js', '/tracker.css', '/styles.css', '/favicon.svg']) {
+    assert.equal((await fetch(`${base}${asset}`)).status, 200, `asset must load: ${asset}`);
+  }
+  assert.notEqual((await fetch(`${base}/../package.json`)).status, 200);
   assert.match(await (await fetch(`${base}/demo`)).text(), /app.js/);
 });
 

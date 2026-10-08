@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { createReadStream, existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { homedir } from 'node:os';
-import { dirname, extname, join, resolve } from 'node:path';
+import { dirname, extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { assertValidEvent } from '../core/contract.js';
@@ -1633,7 +1633,7 @@ export function createApp({
   function serveStatic(request, response, pathname) {
     const requested = pathname === '/' ? 'index.html' : pathname.slice(1);
     const file = resolve(PUBLIC_DIR, requested);
-    if (!file.startsWith(`${PUBLIC_DIR}/`) && file !== join(PUBLIC_DIR, 'index.html')) {
+    if (!file.startsWith(`${PUBLIC_DIR}${sep}`)) {
       responseJson(response, 403, { error: 'Forbidden' });
       return;
     }
