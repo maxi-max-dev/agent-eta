@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#dce5e8"><title>Agent ETA · 还要多久？</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/tracker.css">
+  <script type="module" src="/tracker.js"></script>
+</head>
+<body>
+<main class="shell tracker-shell">
+  <header class="masthead">
+    <a class="wordmark" href="/"><span class="wordmark-mark" aria-hidden="true"></span><span>Agent ETA</span></a>
+    <nav class="source-switch" aria-label="数据源"><span class="source-option is-active">通用 Agent</span><a class="source-option" href="/demo">演示 / Codex 观察</a></nav>
+  </header>
+  <section class="tracker-main" aria-labelledby="headline">
+    <div class="tracker-toolbar"><p class="eyebrow">你的 Agent，还要多久？</p><span id="connection" role="status">正在连接本机…</span></div>
+    <label class="run-picker" id="picker" hidden>正在看 <select id="run-select" aria-label="选择运行"></select></label>
+    <p class="eyebrow" id="run-label">本机运行 · 实验版本</p>
+    <h1 id="headline" aria-live="polite">正在读取…</h1>
+    <p class="tracker-explanation" id="explanation">读取本机运行记录，保留真实观测与估计刷新时间。</p>
+    <div class="estimate-range" id="range" hidden><span>模型区间 P20–P80</span><strong id="range-value"></strong><small>剩余活跃时间 · 区间尚未校准</small></div>
+    <dl class="tracker-facts" id="facts" hidden>
+      <div><dt>已运行</dt><dd id="elapsed"></dd></div>
+      <div><dt>可用同类历史</dt><dd id="history"></dd></div>
+      <div><dt>真实观测</dt><dd id="observed"></dd></div>
+      <div><dt>估计刷新</dt><dd id="estimated"></dd></div>
+    </dl>
+    <p class="receipt" id="receipt" hidden>本次估计已留存于本机，后续可与真实完成时间对照。</p>
+  </section>
+  <section class="tracker-setup" id="setup" hidden>
+    <h2>把一条真实命令接进来</h2>
+    <p>在同一个仓库目录另开终端，把 COMMAND 换成实际命令：</p>
+    <pre><code>node bin/agent-eta.js run --profile my-agent --class coding -- COMMAND</code></pre>
+    <p>跨目录时，启动页面和运行命令都指定同一个 <code>--db</code> 绝对路径。也可让 Agent 阅读 <code>skills/agent-eta/SKILL.md</code>。</p>
+    <a href="/demo">先看合成演示 →</a>
+  </section>
+  <footer class="tracker-footer"><span>本机保存 · 无上传</span><span>每 5 秒重算 ≠ Agent 有新进展</span><span>预测时间不能代替任务验收</span></footer>
+</main>
+</body>
+</html>

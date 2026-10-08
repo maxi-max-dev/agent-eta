@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 // A first launch uses only synthetic replay fixtures. Live observation is explicit.
-console.log('AgentWhen demo: synthetic examples only; local task watcher is disabled.');
+console.log('Agent ETA: local run dashboard + synthetic demo; provider log watcher is disabled.');
 const child = spawn(process.execPath, ['--no-warnings', fileURLToPath(new URL('../src/server/main.js', import.meta.url))], {
   stdio: 'inherit',
   env: { ...process.env, AGENT_ETA_WATCH: '0', AGENT_ETA_WEEKLY_EVAL: '0' },

@@ -17,6 +17,7 @@ import {
 } from '../reporter/contract.js';
 import { applyReporterObservation } from '../reporter/ingest.js';
 import { AgentEtaDatabase } from '../storage/database.js';
+import { AgentETA, defaultDatabasePath } from '../generic/tracker.js';
 import { writeWeeklyEvaluation } from '../../scripts/evaluate-weekly.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -1452,6 +1453,7 @@ export function isLiveSnapshotFresh(snapshot, now = new Date()) {
 
 export function createApp({
   databasePath = process.env.AGENT_ETA_DB || DEFAULT_DB,
+  trackerDatabasePath = null,
   fixtureDirectory = FIXTURE_DIR,
   wallClock = () => new Date(),
   liveWatchEnabled = false,
@@ -1462,6 +1464,9 @@ export function createApp({
   weeklyOutputDirectory = OUTPUT_DIR,
 } = {}) {
   const database = new AgentEtaDatabase(databasePath);
+  const tracker = trackerDatabasePath === null ? null : new AgentETA({
+    filename: trackerDatabasePath, clock: () => Number(wallClock()),
+  });
   const fixtures = readFixtures(fixtureDirectory);
   const sseClients = new Set();
   let projection = null;
@@ -1648,6 +1653,23 @@ export function createApp({
   async function handler(request, response) {
     const url = new URL(request.url, 'http://127.0.0.1');
     try {
+      if (url.pathname === '/api/tracker/runs') {
+        const port = server.address()?.port;
+        const hosts = [`127.0.0.1:${port}`, `localhost:${port}`];
+        if (!hosts.includes(request.headers.host)
+          || (request.headers.origin && !hosts.map(host => `http://${host}`).includes(request.headers.origin))
+          || request.headers['sec-fetch-site'] === 'cross-site') {
+          responseJson(response, 403, { error: 'LOCAL_ORIGIN_REQUIRED' });
+          return;
+        }
+        if (request.method !== 'GET') {
+          responseJson(response, 405, { error: 'READ_ONLY_ENDPOINT' });
+          return;
+        }
+        response.setHeader('Cache-Control', 'no-store');
+        responseJson(response, 200, { enabled: Boolean(tracker), runs: tracker?.list() ?? [] });
+        return;
+      }
       if (request.method === 'GET' && url.pathname === '/api/health') {
         const schemaVersion = Number(database.db.prepare(`
           SELECT value FROM schema_meta WHERE key = 'schema_version'
@@ -1740,7 +1762,8 @@ export function createApp({
         return;
       }
       if (request.method === 'GET') {
-        serveStatic(request, response, url.pathname);
+        const path = url.pathname === '/' ? '/tracker.html' : url.pathname === '/demo' ? '/index.html' : url.pathname;
+        serveStatic(request, response, path);
         return;
       }
       responseJson(response, 404, { error: 'Not found' });
@@ -1819,6 +1842,7 @@ export function createApp({
       }
       for (const client of sseClients) client.end();
       await new Promise((resolveClose) => server.close(() => {
+        tracker?.close();
         database.close();
         resolveClose();
       }));
@@ -1832,12 +1856,13 @@ async function main() {
   const weeklyEvaluationEnabled = process.env.AGENT_ETA_WEEKLY_EVAL !== '0';
   const watchInterval = Number(process.env.AGENT_ETA_WATCH_INTERVAL_MS || 2_000);
   const app = createApp({
+    trackerDatabasePath: defaultDatabasePath(),
     liveWatchEnabled: watchEnabled,
     liveWatchIntervalMs: watchInterval,
     weeklyEvaluationEnabled,
   });
   app.server.listen(port, '127.0.0.1', () => {
-    console.log(`Agent ETA Demo → http://127.0.0.1:${port}`);
+    console.log(`Agent ETA → http://127.0.0.1:${port}`);
     console.log(`SQLite → ${app.database.filename}`);
     console.log(`Codex shadow watcher → ${app.getLiveWatchStatus().status}`);
   });

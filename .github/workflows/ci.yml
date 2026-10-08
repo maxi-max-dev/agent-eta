@@ -16,5 +16,5 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: npm test
-      - run: node bin/agentwhen.js --help
+      - run: node bin/agent-eta.js --help
       - run: npm pack --dry-run

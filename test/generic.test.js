@@ -25,7 +25,7 @@ test('cold start exposes no invented ETA; status is not a heartbeat', t => {
   assert.equal(later.observedAt, first.observedAt);
   assert.notEqual(later.estimatedAt, first.estimatedAt);
   const ping = tracker.ping(first.runId);
-  assert.equal(ping.estimateStatus, 'cold_start');
+  assert.equal(ping.estimateStatus, 'observation_gap');
   assert.equal(ping.historyEligible, false);
 });
 

@@ -1,6 +1,6 @@
 {
-  "name": "agentwhen",
-  "version": "0.1.0",
+  "name": "agent-eta",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "How long will your agent take? Local runtime estimates with a portable CLI, JavaScript SDK and agent skill.",
@@ -21,13 +21,14 @@
     "scan:live:import": "node --no-warnings scripts/scan-live.js --days=30 --import",
     "start:live": "node --no-warnings src/server/main.js",
     "demo": "node --no-warnings scripts/start-demo.js",
-    "cli": "node --no-warnings bin/agentwhen.js"
+    "cli": "node --no-warnings bin/agent-eta.js"
   },
   "engines": {
     "node": ">=22.13.0"
   },
   "license": "MIT",
   "bin": {
+    "agent-eta": "bin/agent-eta.js",
     "agentwhen": "bin/agentwhen.js"
   },
   "exports": {
@@ -35,11 +36,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/maxi-max-dev/agentwhen.git"
+    "url": "git+https://github.com/maxi-max-dev/agent-eta.git"
   },
-  "homepage": "https://github.com/maxi-max-dev/agentwhen",
+  "homepage": "https://github.com/maxi-max-dev/agent-eta",
   "bugs": {
-    "url": "https://github.com/maxi-max-dev/agentwhen/issues"
+    "url": "https://github.com/maxi-max-dev/agent-eta/issues"
   },
   "files": [
     "bin/",

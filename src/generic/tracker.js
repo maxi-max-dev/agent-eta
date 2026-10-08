@@ -1,20 +1,23 @@
 import { DatabaseSync } from 'node:sqlite';
-import { randomUUID } from 'node:crypto';
-import { mkdirSync } from 'node:fs';
+import { createHash, randomUUID } from 'node:crypto';
+import { existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { forecastRun } from '../core/estimator.js';
 
 export const STALE_AFTER_MS = 60_000;
 export const MIN_HISTORY = 3;
 export const TASK_CLASSES = ['coding', 'research', 'review', 'writing', 'other'];
+export const MODEL_VERSION = 'conditional-lognormal/1';
 const TERMINAL = new Set(['succeeded', 'failed', 'cancelled']);
 
 export function defaultDatabasePath() {
-  return process.env.AGENTWHEN_DB || resolve('.agentwhen', 'runs.sqlite');
+  return process.env.AGENT_ETA_TRACKER_DB || process.env.AGENTWHEN_DB
+    || (existsSync(resolve('.agentwhen', 'runs.sqlite'))
+      ? resolve('.agentwhen', 'runs.sqlite') : resolve('.agent-eta', 'runs.sqlite'));
 }
 
 /** Local, opt-in metadata only. No prompts, commands, outputs or provider logs. */
-export class AgentWhen {
+export class AgentETA {
   constructor({ filename = defaultDatabasePath(), clock = () => Date.now() } = {}) {
     if (filename !== ':memory:') mkdirSync(dirname(resolve(filename)), { recursive: true, mode: 0o700 });
     this.clock = clock;
@@ -30,6 +33,12 @@ export class AgentWhen {
       );
       CREATE INDEX IF NOT EXISTS agentwhen_cohort
         ON agentwhen_runs(profile, task_class, status, finished_at);
+      CREATE TABLE IF NOT EXISTS eta_forecasts (
+        id TEXT PRIMARY KEY, run_id TEXT NOT NULL, estimated_at INTEGER NOT NULL,
+        active_ms REAL NOT NULL, estimate_status TEXT NOT NULL,
+        model_version TEXT NOT NULL, payload_json TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS eta_forecast_run ON eta_forecasts(run_id, estimated_at);
     `);
   }
 
@@ -111,8 +120,9 @@ export class AgentWhen {
       .all(row.profile, row.task_class, now, row.id)
       .map(item => ({ actualMinutes: item.active_ms / 60_000, taskClass: row.task_class }));
     const stale = row.status === 'running' && now - row.last_seen > STALE_AFTER_MS;
-    let estimateStatus = TERMINAL.has(row.status) ? 'terminal'
+    const estimateStatus = TERMINAL.has(row.status) ? 'terminal'
       : row.status === 'paused' ? 'paused' : stale ? 'stale'
+        : !row.history_eligible ? 'observation_gap'
         : history.length < MIN_HISTORY ? 'cold_start' : 'experimental';
     let remaining = null;
     if (estimateStatus === 'experimental') {
@@ -122,7 +132,7 @@ export class AgentWhen {
       });
       remaining = { p20: forecast.lowerMinutes, p50: forecast.p50Minutes, p80: forecast.p80Minutes };
     }
-    return {
+    const result = {
       schema: 'agentwhen.status/1', runId: row.id, profile: row.profile,
       taskClass: row.task_class, status: row.status, estimateStatus,
       activeMinutes: Math.round(activeMs / 60_000 * 1000) / 1000,
@@ -132,6 +142,28 @@ export class AgentWhen {
       historyCount: history.length, minimumHistory: MIN_HISTORY,
       historyEligible: Boolean(row.history_eligible) && !stale,
       remainingMinutes: remaining, calibrated: false,
+      modelVersion: MODEL_VERSION,
     };
+    if (estimateStatus !== 'terminal') {
+      // Freeze both the displayed forecast and a simple same-history baseline.
+      // This is a receipt of a forecast, never a new progress/heartbeat event.
+      const totals = history.map(item => item.actualMinutes).sort((a, b) => a - b);
+      const median = totals.length ? (totals[Math.floor((totals.length - 1) / 2)] + totals[Math.floor(totals.length / 2)]) / 2 : null;
+      const payload = {
+        ...result,
+        baselineRemainingMinutes: estimateStatus === 'experimental' ? Math.max(0, median - activeMs / 60_000) : null,
+        baselineVersion: 'cohort-median-minus-elapsed/1',
+      };
+      const json = JSON.stringify(payload);
+      const id = `eta-fc-${createHash('sha256').update(json).digest('hex')}`;
+      this.db.prepare(`INSERT OR IGNORE INTO eta_forecasts
+        (id, run_id, estimated_at, active_ms, estimate_status, model_version, payload_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?)`).run(id, row.id, now, activeMs, estimateStatus, MODEL_VERSION, json);
+      result.forecastId = id;
+    } else result.forecastId = null;
+    return result;
   }
 }
+
+// Existing v0.1.0 consumers keep their SDK import, database tables and IDs.
+export { AgentETA as AgentWhen };
