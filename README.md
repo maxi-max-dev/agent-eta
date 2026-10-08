@@ -6,7 +6,7 @@ Local, experimental runtime estimates for agents. Track a bounded run and see re
 
 [中文说明](README.zh-CN.md) · [Agent skill](skills/agent-eta/SKILL.md) · [Roadmap](ROADMAP.md)
 
-> **v0.2.0 is experimental.** Runtime visibility works; general prediction accuracy is not established. This tool does not validate the quality of an agent's work.
+> **v0.3.0 is experimental.** Runtime visibility and prospective evaluation work; general prediction accuracy is not established. This tool does not validate the quality of an agent's work.
 
 ## Run in two minutes
 
@@ -24,7 +24,7 @@ That short command checks wiring, not accuracy. Replace everything after `--` wi
 Or use the pinned GitHub package (Git and npm required; first use downloads it):
 
 ```sh
-npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.2.0 -- agent-eta --help
+npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.3.0 -- agent-eta --help
 ```
 
 There is no npm registry release. The package is marked private to prevent accidental registry publication; GitHub distribution is supported.
@@ -118,6 +118,21 @@ Each displayed nonterminal estimate (including an abstention) is saved to the lo
 
 The public name and command are now **Agent ETA** / `agent-eta`. The v0.1.0 `agentwhen` command, `AgentWhen` SDK export, `AGENTWHEN_DB` variable, database tables, run IDs and `agentwhen.status/1` envelope remain compatible. If `.agentwhen/runs.sqlite` already exists in the current directory, it is reused unless an explicit database is selected. No user data is renamed or deleted. The old GitHub URL redirects; historical v0.1.0 assets keep their original names.
 
+## Evaluate saved predictions
+
+After collecting runs through the CLI or SDK, evaluate their existing receipts locally:
+
+```sh
+node bin/agent-eta.js evaluate --db /absolute/path/runs.sqlite
+# Optionally redirect stdout to a local JSON file for comparison.
+```
+
+This command opens an existing database read-only and outputs deterministic JSON. It does not generate new predictions. At 1, 5 and 10 active minutes, it selects the first receipt in the next 30 seconds, at most one per run per landmark. Early abstentions cannot be replaced by later numeric forecasts. It compares the model with its frozen baseline on exactly the same successful, continuously observed runs, separately by profile, class and model/baseline version. Reports include paired errors, severe underestimates, P80 coverage, interval width and a descriptive run bootstrap interval (null for a singleton).
+
+Availability counts include failed/cancelled closed runs, missing receipts, pauses, cold starts and observation gaps. Unfinished runs are shown separately as pending; results on closed runs can favor shorter tasks. Zero scorable pairs produce an explicit `no_scorable_pairs`, not a performance claim. Older databases without receipts report `missing_journal`; no predictions are backfilled.
+
+Read the frozen [prospective evaluation protocol](docs/PROSPECTIVE-EVALUATION.md) for denominators, integrity checks and limits. The report includes local run/profile metadata. Receipt hashes check consistency, not whether a run was real or synthetic; independent collection evidence is still required. This release adds evaluation tooling, **not evidence of improved accuracy**. Full-journal export and disk-usage controls remain planned.
+
 ## Development and evidence
 
 ```sh
@@ -125,7 +140,7 @@ npm test
 npm run evaluate
 ```
 
-Tests cover lifecycle, privacy, stale observation, cohorts, process behavior, and the existing estimator/dashboard. Evaluation replays synthetic cases. Neither proves real-world accuracy. This project originated in the Agent ETA prototype; internal contract `agenteta.event/1` is retained for compatibility. Technical contracts are in [docs/](docs/).
+Tests cover lifecycle, privacy, stale observation, cohorts, process behavior, prospective evaluation, and the existing estimator/dashboard. `npm run evaluate` is the older synthetic replay; `agent-eta evaluate --db ...` reads portable saved receipts under the prospective protocol. Synthetic tests prove neither real-world accuracy nor adoption. This project originated in the Agent ETA prototype; internal contract `agenteta.event/1` is retained for compatibility. Technical contracts are in [docs/](docs/).
 
 Next: collect predictions prospectively, compare simple baselines on the same held-out cases, and measure severe underestimation and abstention alongside average error. See [Contributing](CONTRIBUTING.md) and the [roadmap](ROADMAP.md).
 

@@ -3,7 +3,8 @@ import { parseArgs } from 'node:util';
 import { spawn } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
-import { AgentETA } from '../src/generic/tracker.js';
+import { AgentETA, defaultDatabasePath } from '../src/generic/tracker.js';
+import { evaluateDatabase } from '../src/generic/evaluate.js';
 
 const HELP = `Agent ETA — How long will your agent take?
 
@@ -12,6 +13,7 @@ Usage: agent-eta <command> [run-id] [options]
   status <id>             Read a fresh estimate (does not send a heartbeat)
   list                    Read the latest 50 runs
   serve                   Open a local dashboard for the same database
+  evaluate                Read-only prospective evaluation as JSON (existing database)
   ping <id>               Report that the caller is still active
   pause <id>              Stop active time while waiting for input
   resume <id>             Resume active time
@@ -96,9 +98,9 @@ try {
   if (values.help || !command || command === 'help') {
     process.stdout.write(HELP);
   } else {
-    const known = ['start', 'status', 'list', 'ping', 'pause', 'resume', 'finish', 'watch', 'run', 'serve'];
+    const known = ['start', 'status', 'list', 'ping', 'pause', 'resume', 'finish', 'watch', 'run', 'serve', 'evaluate'];
     if (!known.includes(command)) throw new Error('Unknown command; use --help');
-    const requiresId = !['start', 'list', 'run', 'serve'].includes(command);
+    const requiresId = !['start', 'list', 'run', 'serve', 'evaluate'].includes(command);
     if (positionals.length !== (requiresId ? 2 : 1)) throw new Error('Unexpected or missing argument; use --help');
     if (boundary >= 0 && command !== 'run') throw new Error('-- is only supported with run');
     const interval = Number(values.interval ?? 5);
@@ -106,7 +108,8 @@ try {
     if (values.outcome && command !== 'finish') throw new Error('--outcome is only supported with finish');
     if (values.port && command !== 'serve') throw new Error('--port is only supported with serve');
     if ((values.profile || values.class) && !['start', 'run'].includes(command)) throw new Error('--profile and --class are only supported with start/run');
-    if (command === 'serve') process.exitCode = await serveDashboard(values);
+    if (command === 'evaluate') emit(evaluateDatabase(values.db ?? defaultDatabasePath()));
+    else if (command === 'serve') process.exitCode = await serveDashboard(values);
     else {
       tracker = new AgentETA({ filename: values.db });
       if (command === 'run') process.exitCode = await runProcess(tracker, values, boundary < 0 ? [] : argv.slice(boundary + 1), interval);

@@ -4,7 +4,7 @@
 
 在本机记录有明确边界的 Agent 运行，结合相似历史估计剩余时间。提供命令行、JavaScript 接口和可携带的 Skill，无需账号、API Key 或运行依赖。
 
-这是 **v0.2.0 实验版本**：接入、状态和估计可用，跨用户的预测准确度尚未建立。它不判断 Agent 的答案或代码是否合格。
+这是 **v0.3.0 实验版本**：接入、状态、估计和前瞻评测可用，跨用户的预测准确度尚未建立。它不判断 Agent 的答案或代码是否合格。
 
 ## 两分钟跑起来
 
@@ -22,7 +22,7 @@ node bin/agent-eta.js run --profile wiring-test --class coding -- node -e "setTi
 也可从固定 GitHub 版本直接运行，需要 npm 和 Git，首次会下载包：
 
 ```sh
-npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.2.0 -- agent-eta --help
+npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.3.0 -- agent-eta --help
 ```
 
 当前只发布 GitHub，没有发布到 npm registry。
@@ -90,6 +90,20 @@ JavaScript 接入见 [英文 README](README.md#javascript-sdk)，可运行例子
 
 改名兼容旧的 `agentwhen` 命令、`AgentWhen` 接口、`AGENTWHEN_DB` 环境变量和原数据格式；当前目录如已有 `.agentwhen/runs.sqlite` 会继续使用，显式 `--db` 优先。旧 GitHub 链接重定向，v0.1.0 历史发布保留原名，不删除用户数据。
 
+## 一条命令核对预测
+
+通过 CLI/SDK 积累运行后，对已有数据库执行：
+
+```sh
+node bin/agent-eta.js evaluate --db /绝对路径/runs.sqlite
+```
+
+输出可复算的 JSON，可自行重定向保存。命令只读数据库，不重新预测，也不修改记录。在每次运行的第 1、5、10 个活跃分钟，分别取之后 30 秒内的第一条预测，每个点每次运行最多一条；先前的弃权不能用后来的数字替换。主模型和当时冻结的中位数基线使用完全相同的成功、持续观测样本，按 profile、任务类别与版本分别报告误差、严重低估、P80 覆盖、区间宽度和按运行重采样的描述性区间。单样本不报置信区间。
+
+失败、取消、缺失预测、冷启动、暂停、观测中断会单独报数，不混入成功时长精度。未结束运行单列为 pending，不能忽略只看已结束运行可能偏向短任务的问题。没有可评分样本会明确写 `no_scorable_pairs`；旧库没有预测记录则写 `missing_journal`，不会事后补造。
+
+统计规则已在实现前冻结，见 [前瞻评测协议](docs/PROSPECTIVE-EVALUATION.md)。报告包含本机运行/profile 元数据，不会自动上传。哈希只能检查记录一致性，不能单独证明真实使用或排除合成数据。**这一版完成评测工具，还没有证明预测更准。** 全量记录导出与磁盘用量仍在后续计划中。
+
 ## 数据与验证
 
 通用接口只存生成 ID、profile/class、状态与时间，不存提示词、命令或输出，不上传数据，不调用模型。被包装的命令自身仍可正常联网。源码含合成样例，不含作者真实会话、数据库和私人截图。
@@ -99,4 +113,4 @@ npm test
 npm run evaluate
 ```
 
-测试通过说明行为符合检查，不证明真实预测准确度；真实效果需要未来固定版本、固定预测时点、同样本基线比较。贡献见 [CONTRIBUTING.md](CONTRIBUTING.md)，后续见 [ROADMAP.md](ROADMAP.md)。MIT 开源。
+`npm run evaluate` 是旧的合成回放；`agent-eta evaluate --db ...` 才是读取通用预测记录的前瞻评测。测试通过说明行为符合检查，不证明真实预测准确度；真实效果需要未来固定版本、固定预测时点、同样本基线比较。贡献见 [CONTRIBUTING.md](CONTRIBUTING.md)，后续见 [ROADMAP.md](ROADMAP.md)。MIT 开源。
