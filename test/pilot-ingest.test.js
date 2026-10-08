@@ -1,3 +1,4 @@
+import { afterCleanup } from '../test-support/cleanup.js';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdtempSync, rmSync } from 'node:fs';
@@ -120,7 +121,7 @@ function jsonl(records) {
 
 function fixture(t) {
   const directory = mkdtempSync(join(tmpdir(), 'agent-eta-goal-pilot-'));
-  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  afterCleanup(t, () => rmSync(directory, { recursive: true, force: true }));
   return {
     file: join(directory, 'private-transcript.jsonl'),
     database: new AgentEtaDatabase(join(directory, 'pilot.sqlite')),
@@ -129,7 +130,7 @@ function fixture(t) {
 
 test('bare create stays unbound while structured goal receipts drive one open task across turns', async (t) => {
   const first = fixture(t);
-  t.after(() => first.database.close());
+  afterCleanup(t, () => first.database.close());
   await writeFile(first.file, jsonl(base({ includeConfirmation: false })), 'utf8');
   const unsupported = await scanCodexPilotSession(first.file);
   importLiveScans({
@@ -207,11 +208,11 @@ test('bare create stays unbound while structured goal receipts drive one open ta
 
 test('historical Goal replay stays out of realtime selection until a distinct live receipt arrives', async (t) => {
   const directory = mkdtempSync(join(tmpdir(), 'agent-eta-goal-provenance-'));
-  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  afterCleanup(t, () => rmSync(directory, { recursive: true, force: true }));
   const file = join(directory, 'session.jsonl');
   const filename = join(directory, 'pilot.sqlite');
   let database = new AgentEtaDatabase(filename);
-  t.after(() => {
+  afterCleanup(t, () => {
     try { database.close(); } catch {}
   });
 
@@ -307,7 +308,7 @@ test('historical Goal replay stays out of realtime selection until a distinct li
 
 test('get_goal absence is coverage-only and cannot roll back canonical run import', async (t) => {
   const { file, database } = fixture(t);
-  t.after(() => database.close());
+  afterCleanup(t, () => database.close());
   const records = [
     ...base({ includeConfirmation: false }),
     call('2026-08-30T00:00:03.000Z', 'get_goal', 'goal-absent'),
@@ -331,7 +332,7 @@ test('get_goal absence is coverage-only and cannot roll back canonical run impor
 
 test('an active goal pauses across a turn gap and resumes under the same task alias', async (t) => {
   const { file, database } = fixture(t);
-  t.after(() => database.close());
+  afterCleanup(t, () => database.close());
   const initialRecords = base();
   await writeFile(file, jsonl(initialRecords), 'utf8');
   const firstScan = await scanCodexPilotSession(file);
@@ -382,11 +383,11 @@ test('active or blocked goal disappearance is persisted as censored and survives
   for (const initialStatus of ['active', 'blocked']) {
     await t.test(initialStatus, async (subtest) => {
       const directory = mkdtempSync(join(tmpdir(), 'agent-eta-goal-censored-'));
-      subtest.after(() => rmSync(directory, { recursive: true, force: true }));
+      afterCleanup(subtest, () => rmSync(directory, { recursive: true, force: true }));
       const file = join(directory, 'session.jsonl');
       const filename = join(directory, 'pilot.sqlite');
       let database = new AgentEtaDatabase(filename);
-      subtest.after(() => {
+      afterCleanup(subtest, () => {
         try {
           database.close();
         } catch {
@@ -438,7 +439,7 @@ test('active or blocked goal disappearance is persisted as censored and survives
 
 test('a malformed durable line makes an already known goal source sticky quarantined', async (t) => {
   const { file, database } = fixture(t);
-  t.after(() => database.close());
+  afterCleanup(t, () => database.close());
   await writeFile(file, jsonl(base()), 'utf8');
   const initial = await scanCodexPilotSession(file);
   importLiveScans({ database, scans: [initial], receivedAt: '2026-08-30T00:10:00.000Z' });
@@ -472,7 +473,7 @@ test('a malformed durable line makes an already known goal source sticky quarant
 
 test('a first-seen conflicted goal remains tombstoned across restart and a later clean branch', async (t) => {
   const directory = mkdtempSync(join(tmpdir(), 'agent-eta-goal-tombstone-'));
-  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  afterCleanup(t, () => rmSync(directory, { recursive: true, force: true }));
   const poisonedFile = join(directory, 'poisoned.jsonl');
   const cleanFile = join(directory, 'clean-copy.jsonl');
   const filename = join(directory, 'pilot.sqlite');
@@ -489,7 +490,7 @@ test('a first-seen conflicted goal remains tombstoned across restart and a later
   await writeFile(cleanFile, jsonl(base()), 'utf8');
 
   let database = new AgentEtaDatabase(filename);
-  t.after(() => {
+  afterCleanup(t, () => {
     try {
       database.close();
     } catch {
@@ -558,7 +559,7 @@ test('lifecycle, state, and causality conflicts downgrade only their previously 
   for (const entry of cases) {
     await t.test(entry.name, async (subtest) => {
       const { file, database } = fixture(subtest);
-      subtest.after(() => database.close());
+      afterCleanup(subtest, () => database.close());
       await writeFile(file, jsonl(base()), 'utf8');
       const initial = await scanCodexPilotSession(file);
       importLiveScans({ database, scans: [initial], receivedAt: '2026-08-30T00:10:00.000Z' });
@@ -580,7 +581,7 @@ test('lifecycle, state, and causality conflicts downgrade only their previously 
 
 test('a target thread that starts late in a mixed file still sticky-quarantines its prior task', async (t) => {
   const { file, database } = fixture(t);
-  t.after(() => database.close());
+  afterCleanup(t, () => database.close());
   const childThread = '01888888-1111-2222-3333-444444444444';
   const prefix = [record('2026-08-29T23:59:00.000Z', 'session_meta', {
     id: childThread,
@@ -616,7 +617,7 @@ test('a target thread that starts late in a mixed file still sticky-quarantines 
 test('a local receipt cannot precede active or complete Goal output time', async (t) => {
   await t.test('active output', async (subtest) => {
     const { file, database } = fixture(subtest);
-    subtest.after(() => database.close());
+    afterCleanup(subtest, () => database.close());
     await writeFile(file, jsonl(base()), 'utf8');
     const result = importLiveScans({
       database,
@@ -632,7 +633,7 @@ test('a local receipt cannot precede active or complete Goal output time', async
 
   await t.test('complete output', async (subtest) => {
     const { file, database } = fixture(subtest);
-    subtest.after(() => database.close());
+    afterCleanup(subtest, () => database.close());
     const activeRecords = base();
     await writeFile(file, jsonl(activeRecords), 'utf8');
     const active = await scanCodexPilotSession(file);
@@ -658,7 +659,7 @@ test('a local receipt cannot precede active or complete Goal output time', async
 
 test('run events, goal receipt, task state, source and forecast roll back together on failure', async (t) => {
   const { file, database } = fixture(t);
-  t.after(() => database.close());
+  afterCleanup(t, () => database.close());
   await writeFile(file, jsonl(base()), 'utf8');
   const scan = await scanCodexPilotSession(file);
   const original = database.saveWorksetForecast.bind(database);
@@ -699,10 +700,10 @@ test('run events, goal receipt, task state, source and forecast roll back togeth
 
 test('the default one-command watcher automatically materializes Goal task state', async (t) => {
   const directory = mkdtempSync(join(tmpdir(), 'agent-eta-goal-watcher-'));
-  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  afterCleanup(t, () => rmSync(directory, { recursive: true, force: true }));
   const file = join(directory, 'session.jsonl');
   const database = new AgentEtaDatabase(join(directory, 'watcher.sqlite'));
-  t.after(() => database.close());
+  afterCleanup(t, () => database.close());
   await writeFile(file, jsonl(base()), 'utf8');
   const watcher = createCodexShadowWatcher({
     root: directory,
@@ -710,7 +711,7 @@ test('the default one-command watcher automatically materializes Goal task state
     now: () => Date.parse('2026-08-30T00:10:00.000Z'),
     initialLookbackMs: 24 * 60 * 60_000,
   });
-  t.after(() => watcher.stop());
+  afterCleanup(t, () => watcher.stop());
 
   const report = await watcher.scanOnce();
   assert.equal(report.ok, true);
@@ -737,10 +738,10 @@ test('the default one-command watcher automatically materializes Goal task state
 
 test('watcher restart catch-up keeps old Goal receipts backfill while admitting a current receipt', async (t) => {
   const directory = mkdtempSync(join(tmpdir(), 'agent-eta-goal-restart-provenance-'));
-  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  afterCleanup(t, () => rmSync(directory, { recursive: true, force: true }));
   const file = join(directory, 'session.jsonl');
   const database = new AgentEtaDatabase(join(directory, 'watcher.sqlite'));
-  t.after(() => database.close());
+  afterCleanup(t, () => database.close());
   const records = [
     ...base(),
     record('2026-08-30T00:00:05.000Z', 'event_msg', {
@@ -774,7 +775,7 @@ test('watcher restart catch-up keeps old Goal receipts backfill while admitting 
       }];
     },
   });
-  t.after(() => watcher.stop());
+  afterCleanup(t, () => watcher.stop());
 
   const report = await watcher.scanOnce();
   assert.equal(report.ok, true);

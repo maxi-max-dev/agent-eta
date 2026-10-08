@@ -30,6 +30,12 @@ async function waitForExit(child, timeoutMs = 4_000) {
 
 async function stopServer(child) {
   if (!child || child.exitCode !== null || child.signalCode !== null) return;
+  if (process.platform === 'win32') {
+    // Windows has no negative-PID process groups. Stop this test's process tree.
+    spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F']);
+    await waitForExit(child);
+    return;
+  }
   // npm and the actual Node server share this isolated process group.
   try {
     process.kill(-child.pid, 'SIGTERM');
@@ -49,7 +55,10 @@ async function stopServer(child) {
 }
 
 async function startServer() {
-  const child = spawn('npm', ['start'], {
+  // npm is a .cmd shim on Windows; launch its JS entry without a shell.
+  const command = process.platform === 'win32' ? process.execPath : 'npm';
+  const args = process.platform === 'win32' ? [process.env.npm_execpath, 'start'] : ['start'];
+  const child = spawn(command, args, {
     cwd: ROOT,
     detached: true,
     env: {

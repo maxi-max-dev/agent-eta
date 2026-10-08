@@ -1,3 +1,4 @@
+import { afterCleanup } from '../test-support/cleanup.js';
 import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -43,10 +44,10 @@ async function sessionFile(root, threadId, body) {
 
 test('provider-owned binder declares and drives current task/project without exposing identities', async (t) => {
   const directory = mkdtempSync(join(tmpdir(), 'agent-eta-current-project-'));
-  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  afterCleanup(t, () => rmSync(directory, { recursive: true, force: true }));
   const sessionRoot = join(directory, 'sessions');
   const database = new AgentEtaDatabase(join(directory, 'agent-eta.sqlite'));
-  t.after(() => database.close());
+  afterCleanup(t, () => database.close());
 
   const threadId = '01999999-aaaa-bbbb-cccc-0123456789ab';
   const sessionId = '01999999-dddd-eeee-ffff-0123456789ab';
@@ -126,10 +127,10 @@ test('provider-owned binder declares and drives current task/project without exp
 
 test('provider-owned binder fails closed for zero and multiple exact-thread active runs', async (t) => {
   const directory = mkdtempSync(join(tmpdir(), 'agent-eta-current-project-fail-'));
-  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  afterCleanup(t, () => rmSync(directory, { recursive: true, force: true }));
   const sessionRoot = join(directory, 'sessions');
   const database = new AgentEtaDatabase(join(directory, 'agent-eta.sqlite'));
-  t.after(() => database.close());
+  afterCleanup(t, () => database.close());
 
   const closedThread = '01888888-aaaa-bbbb-cccc-0123456789ab';
   await sessionFile(sessionRoot, closedThread, transcript(closedThread, [{

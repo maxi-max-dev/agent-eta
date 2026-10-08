@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -39,7 +40,7 @@ function assertNoTranscriptPayload(value) {
 }
 
 test("turn mode recognizes only primary human boundaries and fails closed on an unfinished turn", async () => {
-  const scan = await scanClaudeTurns(baseFixture.pathname);
+  const scan = await scanClaudeTurns(fileURLToPath(baseFixture));
   const grouped = runs(scan);
 
   assert.equal(scan.coverage.turnSegmentation, "structural-ancestry-v1");
@@ -61,7 +62,7 @@ test("turn mode recognizes only primary human boundaries and fails closed on an 
 });
 
 test("meta user envelopes never become turns and ambiguous terminal branches emit no events", async () => {
-  const scan = await scanClaudeTurns(ambiguousFixture.pathname);
+  const scan = await scanClaudeTurns(fileURLToPath(ambiguousFixture));
   assert.equal(scan.coverage.humanTurnCount, 3);
   assert.equal(scan.coverage.terminalHumanTurnCount, 0);
   assert.equal(scan.coverage.ambiguousHumanTurnCount, 3);
@@ -73,7 +74,7 @@ test("meta user envelopes never become turns and ambiguous terminal branches emi
 });
 
 test("turn events fail closed when the stable native session component is absent", async () => {
-  const scan = await scanClaudeTurns(noSessionFixture.pathname);
+  const scan = await scanClaudeTurns(fileURLToPath(noSessionFixture));
   assert.equal(scan.coverage.humanTurnCount, 1);
   assert.equal(scan.coverage.terminalHumanTurnCount, 1);
   assert.equal(scan.coverage.turnIdentityEligible, false);
@@ -82,7 +83,7 @@ test("turn events fail closed when the stable native session component is absent
 });
 
 test("appending and reopening preserves every event of already completed turns", async () => {
-  const [before, after] = await Promise.all([scanClaudeTurns(baseFixture.pathname), scanClaudeTurns(appendedFixture.pathname)]);
+  const [before, after] = await Promise.all([scanClaudeTurns(fileURLToPath(baseFixture)), scanClaudeTurns(fileURLToPath(appendedFixture))]);
   const beforeRuns = runs(before);
   const afterRuns = runs(after);
 
@@ -104,7 +105,7 @@ test("appending and reopening preserves every event of already completed turns",
 });
 
 test("a copied branch preserves shared turn identity without merging its divergent turn", async () => {
-  const [base, branch] = await Promise.all([scanClaudeTurns(baseFixture.pathname), scanClaudeTurns(branchFixture.pathname)]);
+  const [base, branch] = await Promise.all([scanClaudeTurns(fileURLToPath(baseFixture)), scanClaudeTurns(fileURLToPath(branchFixture))]);
   const baseRuns = runs(base);
   const branchRuns = runs(branch);
 
@@ -117,9 +118,9 @@ test("a copied branch preserves shared turn identity without merging its diverge
 
 test("turn mode never emits an irreversible terminal from mutable transcript envelopes", async () => {
   const [before, after, branch] = await Promise.all([
-    scanClaudeTurns(baseFixture.pathname),
-    scanClaudeTurns(appendedFixture.pathname),
-    scanClaudeTurns(branchFixture.pathname),
+    scanClaudeTurns(fileURLToPath(baseFixture)),
+    scanClaudeTurns(fileURLToPath(appendedFixture)),
+    scanClaudeTurns(fileURLToPath(branchFixture)),
   ]);
   for (const scan of [before, after, branch]) {
     assert.equal(scan.events.some((event) => event.kind.startsWith("run_") && event.kind !== "run_started"), false);
@@ -127,20 +128,20 @@ test("turn mode never emits an irreversible terminal from mutable transcript env
 });
 
 test("legacy session events remain the default and explicit turn option matches helper", async () => {
-  const legacy = await scanClaudeSession(baseFixture.pathname);
-  const explicit = await scanClaudeSession(baseFixture.pathname, { segmentation: "turns" });
-  const helper = await scanClaudeTurns(baseFixture.pathname);
+  const legacy = await scanClaudeSession(fileURLToPath(baseFixture));
+  const explicit = await scanClaudeSession(fileURLToPath(baseFixture), { segmentation: "turns" });
+  const helper = await scanClaudeTurns(fileURLToPath(baseFixture));
 
   assert.equal(new Set(legacy.events.map((event) => event.run_id)).size, 1);
   assert.deepEqual(explicit.events, helper.events);
   await assert.rejects(
-    scanClaudeSession(baseFixture.pathname, { segmentation: "messages" }),
+    scanClaudeSession(fileURLToPath(baseFixture), { segmentation: "messages" }),
     /segmentation must be either/,
   );
 });
 
 test("discovery exposes aggregate turn eligibility without event or transcript payloads", async () => {
-  const discovery = await discoverClaudeSessions({ root: appendedFixture.pathname, since: 0 });
+  const discovery = await discoverClaudeSessions({ root: fileURLToPath(appendedFixture), since: 0 });
   assert.equal(discovery.coverage.humanTurns, 3);
   assert.equal(discovery.coverage.terminalHumanTurns, 2);
   assert.equal(discovery.coverage.nonterminalHumanTurns, 1);

@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import os from "node:os";
@@ -32,8 +33,8 @@ function assertPrivacySafe(value) {
 }
 
 test("Claude JSONL scan emits canonical metadata events without transcript text", async () => {
-  const first = await scanClaudeSession(fixture.pathname);
-  const second = await scanClaudeSession(fixture.pathname);
+  const first = await scanClaudeSession(fileURLToPath(fixture));
+  const second = await scanClaudeSession(fileURLToPath(fixture));
 
   assert.equal(first.metadata.provider, "claude");
   assert.equal(first.metadata.sessionKind, "primary");
@@ -70,7 +71,7 @@ test("Claude JSONL scan emits canonical metadata events without transcript text"
   assert.doesNotMatch(serialized, /SANITIZED/);
   assert.doesNotMatch(serialized, /00000000-0000-4000-8000-000000000001/);
   assert.doesNotMatch(serialized, /sourceFile/);
-  assert.doesNotMatch(serialized, new RegExp(fixture.pathname.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.doesNotMatch(serialized, new RegExp(fileURLToPath(fixture).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   const plan = first.events.find((event) => event.kind === "plan_revised");
   assert.deepEqual(
     plan.data.steps.map((step) => step.label),
@@ -80,14 +81,14 @@ test("Claude JSONL scan emits canonical metadata events without transcript text"
 });
 
 test("includeEvents false returns only safe metadata and coverage", async () => {
-  const scan = await scanClaudeSession(fixture.pathname, { includeEvents: false });
+  const scan = await scanClaudeSession(fileURLToPath(fixture), { includeEvents: false });
   assert.deepEqual(Object.keys(scan), ["metadata", "coverage"]);
   assertPrivacySafe(scan);
 });
 
 test("discovery reports explicit primary and all-file plan denominators", async () => {
   const discovered = await discoverClaudeSessions({
-    root: fixture.pathname,
+    root: fileURLToPath(fixture),
     since: 0,
   });
   assert.equal(discovered.coverage.discoveredFiles, 1);
