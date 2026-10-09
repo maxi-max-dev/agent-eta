@@ -3,8 +3,11 @@ import { parseArgs } from 'node:util';
 import { spawn } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 import { AgentETA, defaultDatabasePath } from '../src/generic/tracker.js';
 import { evaluateDatabase } from '../src/generic/evaluate.js';
+import { exportJournal, journalUsage } from '../src/generic/journal.js';
 
 const HELP = `Agent ETA — How long will your agent take?
 
@@ -14,6 +17,8 @@ Usage: agent-eta <command> [run-id] [options]
   list                    Read the latest 50 runs
   serve                   Open a local dashboard for the same database
   evaluate                Read-only prospective evaluation as JSON (existing database)
+  export                  Stream the full portable journal as JSONL (read-only)
+  usage                   Show record counts and database/WAL file bytes (read-only)
   ping <id>               Report that the caller is still active
   pause <id>              Stop active time while waiting for input
   resume <id>             Resume active time
@@ -98,9 +103,9 @@ try {
   if (values.help || !command || command === 'help') {
     process.stdout.write(HELP);
   } else {
-    const known = ['start', 'status', 'list', 'ping', 'pause', 'resume', 'finish', 'watch', 'run', 'serve', 'evaluate'];
+    const known = ['start', 'status', 'list', 'ping', 'pause', 'resume', 'finish', 'watch', 'run', 'serve', 'evaluate', 'export', 'usage'];
     if (!known.includes(command)) throw new Error('Unknown command; use --help');
-    const requiresId = !['start', 'list', 'run', 'serve', 'evaluate'].includes(command);
+    const requiresId = !['start', 'list', 'run', 'serve', 'evaluate', 'export', 'usage'].includes(command);
     if (positionals.length !== (requiresId ? 2 : 1)) throw new Error('Unexpected or missing argument; use --help');
     if (boundary >= 0 && command !== 'run') throw new Error('-- is only supported with run');
     const interval = Number(values.interval ?? 5);
@@ -108,7 +113,9 @@ try {
     if (values.outcome && command !== 'finish') throw new Error('--outcome is only supported with finish');
     if (values.port && command !== 'serve') throw new Error('--port is only supported with serve');
     if ((values.profile || values.class) && !['start', 'run'].includes(command)) throw new Error('--profile and --class are only supported with start/run');
-    if (command === 'evaluate') emit(evaluateDatabase(values.db ?? defaultDatabasePath()));
+    if (command === 'export') await pipeline(Readable.from(exportJournal(values.db ?? defaultDatabasePath())), process.stdout, { end: false });
+    else if (command === 'usage') emit(journalUsage(values.db ?? defaultDatabasePath()));
+    else if (command === 'evaluate') emit(evaluateDatabase(values.db ?? defaultDatabasePath()));
     else if (command === 'serve') process.exitCode = await serveDashboard(values);
     else {
       tracker = new AgentETA({ filename: values.db });
@@ -127,7 +134,7 @@ try {
     }
   }
 } catch (error) {
-  emit({ error: error.message }, process.stderr);
+  emit({ error: error.code === 'EPIPE' ? 'EXPORT_OUTPUT_CLOSED' : error.message }, process.stderr);
   process.exitCode = 1;
 } finally {
   tracker?.close();

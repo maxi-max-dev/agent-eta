@@ -4,7 +4,7 @@
 
 在本机记录有明确边界的 Agent 运行，结合相似历史估计剩余时间。提供命令行、JavaScript 接口和可携带的 Skill，无需账号、API Key 或运行依赖。
 
-这是 **v0.3.0 实验版本**：接入、状态、估计和前瞻评测可用，跨用户的预测准确度尚未建立。它不判断 Agent 的答案或代码是否合格。
+这是 **v0.4.0 实验版本**：接入、状态、估计和前瞻评测可用，跨用户的预测准确度尚未建立。它不判断 Agent 的答案或代码是否合格。
 
 ## 两分钟跑起来
 
@@ -22,7 +22,7 @@ node bin/agent-eta.js run --profile wiring-test --class coding -- node -e "setTi
 也可从固定 GitHub 版本直接运行，需要 npm 和 Git，首次会下载包：
 
 ```sh
-npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.3.0 -- agent-eta --help
+npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.4.0 -- agent-eta --help
 ```
 
 当前只发布 GitHub，没有发布到 npm registry。
@@ -86,7 +86,7 @@ JavaScript 接入见 [英文 README](README.md#javascript-sdk)，可运行例子
 
 ## 留下当时的预测，之后才知道准不准
 
-每次显示的非终态预测或弃权状态，都会存入本机 `eta_forecasts`，包含当时时间、活跃耗时、模型版本，以及只用当时历史计算的简单中位数基线。相同记录去重，之后任务完成也不会改写旧预测。`forecastId` 可用于回查。这是后续真实评测的基础，还不是准确度提升的证明。记录会随使用增长，保留期限和导出功能在计划中。
+每次显示的非终态预测或弃权状态，都会存入本机 `eta_forecasts`，包含当时时间、活跃耗时、模型版本，以及只用当时历史计算的简单中位数基线。相同记录去重，之后任务完成也不会改写旧预测。`forecastId` 可用于回查。这是后续真实评测的基础，还不是准确度提升的证明。记录会随使用增长，可用下方的只读用量和导出命令查看；未启用自动过期。
 
 改名兼容旧的 `agentwhen` 命令、`AgentWhen` 接口、`AGENTWHEN_DB` 环境变量和原数据格式；当前目录如已有 `.agentwhen/runs.sqlite` 会继续使用，显式 `--db` 优先。旧 GitHub 链接重定向，v0.1.0 历史发布保留原名，不删除用户数据。
 
@@ -102,7 +102,20 @@ node bin/agent-eta.js evaluate --db /绝对路径/runs.sqlite
 
 失败、取消、缺失预测、冷启动、暂停、观测中断会单独报数，不混入成功时长精度。未结束运行单列为 pending，不能忽略只看已结束运行可能偏向短任务的问题。没有可评分样本会明确写 `no_scorable_pairs`；旧库没有预测记录则写 `missing_journal`，不会事后补造。
 
-统计规则已在实现前冻结，见 [前瞻评测协议](docs/PROSPECTIVE-EVALUATION.md)。报告包含本机运行/profile 元数据，不会自动上传。哈希只能检查记录一致性，不能单独证明真实使用或排除合成数据。**这一版完成评测工具，还没有证明预测更准。** 全量记录导出与磁盘用量仍在后续计划中。
+统计规则已在实现前冻结，见 [前瞻评测协议](docs/PROSPECTIVE-EVALUATION.md)。报告包含本机运行/profile 元数据，不会自动上传。哈希只能检查记录一致性，不能单独证明真实使用或排除合成数据。**这一版完成评测工具，还没有证明预测更准。** 全量记录导出与磁盘用量已可使用，原始数据默认全部保留。
+
+## 导出记录、查看空间
+
+```sh
+node bin/agent-eta.js usage --db /绝对路径/runs.sqlite
+node bin/agent-eta.js export --db /绝对路径/runs.sqlite
+```
+
+`usage` 分别报告运行/预测条数、预测 JSON 字节数、SQLite 逻辑页/内部空闲页，以及数据库、WAL、SHM 文件长度。文件大小与数据库快照分别采样，并发写入时可能变化；内部空闲页不等于文件已经缩小。
+
+`export` 以 JSONL 流式导出同一快照里的全部通用运行和预测，保留原始 JSON、当时的基线和插入顺序，最后附条数与 SHA-256 完成标记。需要保存时，将 stdout 重定向到新的本地文件；中断或缺少匹配完成标记的输出不能算完整导出。两个命令都只读、不创建缺失数据库、不上传，也不删除原记录。导出含本机元数据，未自动脱敏。
+
+完整格式及保留期限选项见 [记录导出与用量说明](docs/JOURNAL.md)。默认全部保留；未开启自动过期或清理，本轮也不改变预测算法。
 
 ## 数据与验证
 

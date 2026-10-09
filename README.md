@@ -6,7 +6,7 @@ Local, experimental runtime estimates for agents. Track a bounded run and see re
 
 [中文说明](README.zh-CN.md) · [Agent skill](skills/agent-eta/SKILL.md) · [Roadmap](ROADMAP.md)
 
-> **v0.3.0 is experimental.** Runtime visibility and prospective evaluation work; general prediction accuracy is not established. This tool does not validate the quality of an agent's work.
+> **v0.4.0 is experimental.** Runtime visibility and prospective evaluation work; general prediction accuracy is not established. This tool does not validate the quality of an agent's work.
 
 ## Run in two minutes
 
@@ -24,7 +24,7 @@ That short command checks wiring, not accuracy. Replace everything after `--` wi
 Or use the pinned GitHub package (Git and npm required; first use downloads it):
 
 ```sh
-npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.3.0 -- agent-eta --help
+npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.4.0 -- agent-eta --help
 ```
 
 There is no npm registry release. The package is marked private to prevent accidental registry publication; GitHub distribution is supported.
@@ -114,7 +114,7 @@ The repository contains synthetic fixtures, not the author's private sessions, d
 
 ## Forecast receipts and compatibility
 
-Each displayed nonterminal estimate (including an abstention) is saved to the local `eta_forecasts` table with a content-based ID, the exact prediction time, active duration, model version, and a frozen median-duration baseline computed from the history available then. Identical receipts deduplicate; later outcomes do not rewrite them. Polling records estimates but never changes `observedAt`. `forecastId` identifies the receipt. These records enable prospective evaluation; they do not yet establish accuracy. Journaling grows with usage; retention/export controls are planned.
+Each displayed nonterminal estimate (including an abstention) is saved to the local `eta_forecasts` table with a content-based ID, the exact prediction time, active duration, model version, and a frozen median-duration baseline computed from the history available then. Identical receipts deduplicate; later outcomes do not rewrite them. Polling records estimates but never changes `observedAt`. `forecastId` identifies the receipt. These records enable prospective evaluation; they do not yet establish accuracy. Journaling grows with usage; use the read-only `usage` and `export` commands below. Automatic retention is not enabled.
 
 The public name and command are now **Agent ETA** / `agent-eta`. The v0.1.0 `agentwhen` command, `AgentWhen` SDK export, `AGENTWHEN_DB` variable, database tables, run IDs and `agentwhen.status/1` envelope remain compatible. If `.agentwhen/runs.sqlite` already exists in the current directory, it is reused unless an explicit database is selected. No user data is renamed or deleted. The old GitHub URL redirects; historical v0.1.0 assets keep their original names.
 
@@ -131,7 +131,20 @@ This command opens an existing database read-only and outputs deterministic JSON
 
 Availability counts include failed/cancelled closed runs, missing receipts, pauses, cold starts and observation gaps. Unfinished runs are shown separately as pending; results on closed runs can favor shorter tasks. Zero scorable pairs produce an explicit `no_scorable_pairs`, not a performance claim. Older databases without receipts report `missing_journal`; no predictions are backfilled.
 
-Read the frozen [prospective evaluation protocol](docs/PROSPECTIVE-EVALUATION.md) for denominators, integrity checks and limits. The report includes local run/profile metadata. Receipt hashes check consistency, not whether a run was real or synthetic; independent collection evidence is still required. This release adds evaluation tooling, **not evidence of improved accuracy**. Full-journal export and disk-usage controls remain planned.
+Read the frozen [prospective evaluation protocol](docs/PROSPECTIVE-EVALUATION.md) for denominators, integrity checks and limits. The report includes local run/profile metadata. Receipt hashes check consistency, not whether a run was real or synthetic; independent collection evidence is still required. This release adds evaluation tooling, **not evidence of improved accuracy**. Full-journal export and disk-usage reporting are available below; automatic deletion remains disabled.
+
+## Export records and check storage
+
+```sh
+node bin/agent-eta.js usage --db /absolute/path/runs.sqlite
+node bin/agent-eta.js export --db /absolute/path/runs.sqlite
+```
+
+`usage` reports record counts, UTF-8 receipt payload bytes, SQLite logical/free pages, and database/WAL/SHM file lengths separately. File lengths are sampled separately from the SQL snapshot and may change while a writer is active; internal free pages do not mean the file has shrunk.
+
+`export` streams a single snapshot as JSONL, preserving every portable run and receipt, original prediction JSON, frozen baseline and insertion order. It ends with counts and a SHA-256 completion marker. Redirect stdout to a new local file if needed; an interrupted stream without a matching completion marker is incomplete. Both commands are read-only, create no missing database, and upload nothing. Exports contain local metadata and are not anonymized. The original records remain in place.
+
+See [the journal contract and retention choices](docs/JOURNAL.md). Default retention keeps everything. No automatic expiry or pruning is enabled, and the prediction algorithm is unchanged.
 
 ## Development and evidence
 
