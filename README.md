@@ -6,7 +6,7 @@ Local, experimental runtime estimates for agents. Track a bounded run and see re
 
 [中文说明](README.zh-CN.md) · [Agent skill](skills/agent-eta/SKILL.md) · [Roadmap](ROADMAP.md)
 
-> **v0.4.0 is experimental.** Runtime visibility and prospective evaluation work; general prediction accuracy is not established. This tool does not validate the quality of an agent's work.
+> **v0.5.0 is experimental.** Runtime visibility and prospective evaluation work; general prediction accuracy is not established. This tool does not validate the quality of an agent's work.
 
 ## Run in two minutes
 
@@ -24,7 +24,7 @@ That short command checks wiring, not accuracy. Replace everything after `--` wi
 Or use the pinned GitHub package (Git and npm required; first use downloads it):
 
 ```sh
-npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.4.0 -- agent-eta --help
+npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.5.0 -- agent-eta --help
 ```
 
 There is no npm registry release. The package is marked private to prevent accidental registry publication; GitHub distribution is supported.
@@ -132,6 +132,20 @@ This command opens an existing database read-only and outputs deterministic JSON
 Availability counts include failed/cancelled closed runs, missing receipts, pauses, cold starts and observation gaps. Unfinished runs are shown separately as pending; results on closed runs can favor shorter tasks. Zero scorable pairs produce an explicit `no_scorable_pairs`, not a performance claim. Older databases without receipts report `missing_journal`; no predictions are backfilled.
 
 Read the frozen [prospective evaluation protocol](docs/PROSPECTIVE-EVALUATION.md) for denominators, integrity checks and limits. The report includes local run/profile metadata. Receipt hashes check consistency, not whether a run was real or synthetic; independent collection evidence is still required. This release adds evaluation tooling, **not evidence of improved accuracy**. Full-journal export and disk-usage reporting are available below; automatic deletion remains disabled.
+
+## Compare a shadow candidate
+
+Starting with v0.5.0, new portable receipts also freeze an empirical conditional candidate and the ordered history-duration array used by both models. The displayed ETA still uses the existing model. No extra model service or network request is needed.
+
+```sh
+node bin/agent-eta.js compare --db /absolute/path/runs.sqlite
+```
+
+This read-only report uses the same fixed landmarks as `evaluate`, and compares the current model, frozen median baseline and candidate on exactly the same successful runs. It includes errors, severe underestimates, coverage, interval width, missing records and abstentions. With fewer than three comparable durations still longer than elapsed time, the candidate returns `insufficient_tail` and no number; a smaller scored subset must not hide that loss of availability.
+
+Old receipts without shadow fields remain `missing_shadow`; the command never regenerates old predictions or consults future history. The report always has `promotionEligible: false`: synthetic replay verifies the pipeline, while a predeclared future holdout and real accuracy evidence remain pending. See the frozen [shadow comparison protocol](docs/SHADOW-COMPARISON.md).
+
+New receipts store up to 200 history durations per estimate, adding bounded per-receipt storage. These are local duration metadata, not prompts or commands; `usage` measures the bytes and `export` preserves them. Receipt IDs change with the additional content, while historical receipts remain untouched.
 
 ## Export records and check storage
 

@@ -8,6 +8,7 @@ import { pipeline } from 'node:stream/promises';
 import { AgentETA, defaultDatabasePath } from '../src/generic/tracker.js';
 import { evaluateDatabase } from '../src/generic/evaluate.js';
 import { exportJournal, journalUsage } from '../src/generic/journal.js';
+import { compareDatabase } from '../src/generic/compare.js';
 
 const HELP = `Agent ETA — How long will your agent take?
 
@@ -17,6 +18,7 @@ Usage: agent-eta <command> [run-id] [options]
   list                    Read the latest 50 runs
   serve                   Open a local dashboard for the same database
   evaluate                Read-only prospective evaluation as JSON (existing database)
+  compare                 Compare saved shadow predictions on the same runs (read-only)
   export                  Stream the full portable journal as JSONL (read-only)
   usage                   Show record counts and database/WAL file bytes (read-only)
   ping <id>               Report that the caller is still active
@@ -103,9 +105,9 @@ try {
   if (values.help || !command || command === 'help') {
     process.stdout.write(HELP);
   } else {
-    const known = ['start', 'status', 'list', 'ping', 'pause', 'resume', 'finish', 'watch', 'run', 'serve', 'evaluate', 'export', 'usage'];
+    const known = ['start', 'status', 'list', 'ping', 'pause', 'resume', 'finish', 'watch', 'run', 'serve', 'evaluate', 'export', 'usage', 'compare'];
     if (!known.includes(command)) throw new Error('Unknown command; use --help');
-    const requiresId = !['start', 'list', 'run', 'serve', 'evaluate', 'export', 'usage'].includes(command);
+    const requiresId = !['start', 'list', 'run', 'serve', 'evaluate', 'export', 'usage', 'compare'].includes(command);
     if (positionals.length !== (requiresId ? 2 : 1)) throw new Error('Unexpected or missing argument; use --help');
     if (boundary >= 0 && command !== 'run') throw new Error('-- is only supported with run');
     const interval = Number(values.interval ?? 5);
@@ -116,6 +118,7 @@ try {
     if (command === 'export') await pipeline(Readable.from(exportJournal(values.db ?? defaultDatabasePath())), process.stdout, { end: false });
     else if (command === 'usage') emit(journalUsage(values.db ?? defaultDatabasePath()));
     else if (command === 'evaluate') emit(evaluateDatabase(values.db ?? defaultDatabasePath()));
+    else if (command === 'compare') emit(compareDatabase(values.db ?? defaultDatabasePath()));
     else if (command === 'serve') process.exitCode = await serveDashboard(values);
     else {
       tracker = new AgentETA({ filename: values.db });

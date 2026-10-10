@@ -81,7 +81,7 @@ function bootstrap(differences, key) {
     upper: round(samples[Math.ceil(0.975 * samples.length) - 1]), resamples: 2000, unit: 'run' };
 }
 
-function summarizeGroup(group, landmark) {
+export function summarizeGroup(group, landmark) {
   const { pairs, ...identity } = group;
   const modelErrors = pairs.map(p => Math.abs(p.p50Minutes - p.actualRemainingMinutes));
   const baselineErrors = pairs.map(p => Math.abs(p.baselineMinutes - p.actualRemainingMinutes));
@@ -165,6 +165,12 @@ function landmarkReport(runs, byRun, landmarkMinutes) {
 
 /** Read the supplied database only; never instantiate the writing tracker. */
 export function evaluateDatabase(filename) {
+  return evaluateSnapshot(readEvaluationSnapshot(filename));
+}
+
+// Shared by read-only comparison so selection and candidate reads cannot see
+// two different database snapshots. The original report contract is unchanged.
+export function readEvaluationSnapshot(filename) {
   if (!filename || !existsSync(filename)) throw new Error('DATABASE_NOT_FOUND: select an existing tracker database with --db');
   let db;
   let runs, receipts, hasJournal;
@@ -185,7 +191,10 @@ export function evaluateDatabase(filename) {
     if (error.message === 'UNSUPPORTED_DATABASE_SCHEMA') throw error;
     throw new Error('DATABASE_READ_FAILED: cannot read the selected tracker database', { cause: error });
   } finally { db?.close(); }
+  return { runs, receipts, hasJournal };
+}
 
+export function evaluateSnapshot({ runs, receipts, hasJournal }) {
   const valid = runs.filter(validRun);
   const closed = valid.filter(run => CLOSED.has(run.status));
   const byRun = new Map();

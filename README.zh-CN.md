@@ -4,7 +4,7 @@
 
 在本机记录有明确边界的 Agent 运行，结合相似历史估计剩余时间。提供命令行、JavaScript 接口和可携带的 Skill，无需账号、API Key 或运行依赖。
 
-这是 **v0.4.0 实验版本**：接入、状态、估计和前瞻评测可用，跨用户的预测准确度尚未建立。它不判断 Agent 的答案或代码是否合格。
+这是 **v0.5.0 实验版本**：接入、状态、估计和前瞻评测可用，跨用户的预测准确度尚未建立。它不判断 Agent 的答案或代码是否合格。
 
 ## 两分钟跑起来
 
@@ -22,7 +22,7 @@ node bin/agent-eta.js run --profile wiring-test --class coding -- node -e "setTi
 也可从固定 GitHub 版本直接运行，需要 npm 和 Git，首次会下载包：
 
 ```sh
-npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.4.0 -- agent-eta --help
+npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.5.0 -- agent-eta --help
 ```
 
 当前只发布 GitHub，没有发布到 npm registry。
@@ -103,6 +103,20 @@ node bin/agent-eta.js evaluate --db /绝对路径/runs.sqlite
 失败、取消、缺失预测、冷启动、暂停、观测中断会单独报数，不混入成功时长精度。未结束运行单列为 pending，不能忽略只看已结束运行可能偏向短任务的问题。没有可评分样本会明确写 `no_scorable_pairs`；旧库没有预测记录则写 `missing_journal`，不会事后补造。
 
 统计规则已在实现前冻结，见 [前瞻评测协议](docs/PROSPECTIVE-EVALUATION.md)。报告包含本机运行/profile 元数据，不会自动上传。哈希只能检查记录一致性，不能单独证明真实使用或排除合成数据。**这一版完成评测工具，还没有证明预测更准。** 全量记录导出与磁盘用量已可使用，原始数据默认全部保留。
+
+## 同样本比较候选算法
+
+v0.5.0 开始，新记录同时冻结当前模型、经验条件分位数候选，以及两者实际使用的历史耗时数组。页面和状态输出仍显示原模型，不增加联网或模型服务调用。
+
+```sh
+node bin/agent-eta.js compare --db /绝对路径/runs.sqlite
+```
+
+这个只读报告沿用固定预测点，让当前模型、当时的中位数基线和候选方法用完全相同的成功运行比较误差、严重低估、覆盖和区间宽度，同时单列缺失与弃权。历史中总耗时长于当前已耗时的相似运行不足 3 条时，候选返回 `insufficient_tail`，不给数字；不能因为少报难题，就把交集里的低误差解释成整体更好。
+
+旧记录缺少候选时显示 `missing_shadow`，不会事后补造预测或用未来历史重算。报告固定标记 `promotionEligible: false`：受控回放已验证管线，独立未来验证集和真实效果仍待完成，默认算法不替换。规则见实现前冻结的 [影子比较协议](docs/SHADOW-COMPARISON.md)。
+
+每条新预测最多保存 200 个历史耗时数值，会增加存储；仅是本机时长元数据，不含提示词或命令。可用 `usage` 查看、`export` 保存。新增内容会改变新预测的内容哈希 ID，旧记录保持原样。
 
 ## 导出记录、查看空间
 

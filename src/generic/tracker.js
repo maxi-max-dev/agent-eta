@@ -3,6 +3,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { forecastRun } from '../core/estimator.js';
+import { captureShadow } from './shadow.js';
 
 export const STALE_AFTER_MS = 60_000;
 export const MIN_HISTORY = 3;
@@ -153,6 +154,9 @@ export class AgentETA {
         ...result,
         baselineRemainingMinutes: estimateStatus === 'experimental' ? Math.max(0, median - activeMs / 60_000) : null,
         baselineVersion: 'cohort-median-minus-elapsed/1',
+        // Both candidates see this exact array and timestamp. Never rebuild an
+        // old candidate later from a history that includes future outcomes.
+        ...captureShadow(history, activeMs, result.estimatedAt, estimateStatus),
       };
       const json = JSON.stringify(payload);
       const id = `eta-fc-${createHash('sha256').update(json).digest('hex')}`;
