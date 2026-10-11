@@ -4,7 +4,7 @@
 
 在本机记录有明确边界的 Agent 运行，结合相似历史估计剩余时间。提供命令行、JavaScript 接口和可携带的 Skill，无需账号、API Key 或运行依赖。
 
-这是 **v0.6.0 实验版本**：接入、状态、估计和前瞻评测可用，跨用户的预测准确度尚未建立。它不判断 Agent 的答案或代码是否合格。
+这是 **v0.7.0 实验版本**：接入、状态、估计和前瞻评测可用，跨用户的预测准确度尚未建立。它不判断 Agent 的答案或代码是否合格。
 
 ## 两分钟跑起来
 
@@ -22,7 +22,7 @@ node bin/agent-eta.js run --profile wiring-test --class coding -- node -e "setTi
 也可从固定 GitHub 版本直接运行，需要 npm 和 Git，首次会下载包：
 
 ```sh
-npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.6.0 -- agent-eta --help
+npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.7.0 -- agent-eta --help
 ```
 
 当前只发布 GitHub，没有发布到 npm registry。
@@ -132,6 +132,19 @@ node bin/agent-eta.js compare --db .agent-eta/runs.sqlite --plan .agent-eta/coho
 先确认计划命令成功，再使用文件。计划冻结当时已经结束的调参运行及其预测清单；之后补写的旧运行预测不会计入，修改或移除冻结记录会报错。验证集只纳入窗口内新启动的运行（含起点、不含终点），不能根据结束时间、误差或是否有数字挑选；同一次运行的所有预测点始终属于同一集合。窗口结束时还没做完的运行仍会列出。
 
 报告按 profile、任务类别以及最终活跃耗时（≤5、>5–15、>15 分钟）分别展示误差、可用率与历史不足；未完成或无效时长列为 unknown。耗时分层只用于事后诊断，不是预测输入。原有不带计划的 `compare` 保持兼容。**这一步建立可复算的划分，未证明真实效果，也不自动替换默认模型。** 已查看的验证结果不能再用于调参后冒充未触碰数据；计划和报告含本机元数据，请保留在本地。细则见 [时间切分协议](docs/TIME-SPLIT.md)。
+
+## 先定改善门槛，再看新结果
+
+v0.7.0 增加候选算法的复核门槛。先选定真实工作流，替换未来 UTC 时间占位符，保存到一个**新文件**；不能给已经看过的验证集事后补门槛：
+
+```sh
+node bin/agent-eta.js gate-plan --db .agent-eta/runs.sqlite --profile my-agent --class coding --holdout-start "FUTURE_START_UTC" --holdout-end "FUTURE_END_UTC" > .agent-eta/gate-plan.json
+node bin/agent-eta.js gate --db .agent-eta/runs.sqlite --plan .agent-eta/gate-plan.json
+```
+
+计划固定工作流、模型版本和[复核条件](docs/PROMOTION-GATE.md)。收集窗口未结束或还有任务未完成时，`gate` 暂不展示精度结果。之后在第 1、5、10 分钟逐项检查：每点至少 30 个同样本对照、至少 10 个长任务对照，平均误差比原模型和简单基线均降低 10%，同时约束严重低估、覆盖、区间宽度和数字可用率。具体边界见协议；这些是工程筛选门槛，不是统计充分性的证明。
+
+结果会明确区分等待窗口、等待任务结束、数据无效、样本不足、未达标，以及“数字达标但待独立复核”。最后一种也保持 `promotionEligible: false`，必须另行核验真实来源、未用于调参和实际采集版本；不会自动替换模型。命令退出码为 0 只表示报告生成成功。已查看的数据不可重新当作未触碰验证集，修改算法后应另开未来计划。两个命令只读本机数据库，计划和报告也请留在本地。
 
 ## 导出记录、查看空间
 

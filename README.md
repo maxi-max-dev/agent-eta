@@ -6,7 +6,7 @@ Local, experimental runtime estimates for agents. Track a bounded run and see re
 
 [中文说明](README.zh-CN.md) · [Agent skill](skills/agent-eta/SKILL.md) · [Roadmap](ROADMAP.md)
 
-> **v0.6.0 is experimental.** Runtime visibility and prospective evaluation work; general prediction accuracy is not established. This tool does not validate the quality of an agent's work.
+> **v0.7.0 is experimental.** Runtime visibility and prospective evaluation work; general prediction accuracy is not established. This tool does not validate the quality of an agent's work.
 
 ## Run in two minutes
 
@@ -24,7 +24,7 @@ That short command checks wiring, not accuracy. Replace everything after `--` wi
 Or use the pinned GitHub package (Git and npm required; first use downloads it):
 
 ```sh
-npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.6.0 -- agent-eta --help
+npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.7.0 -- agent-eta --help
 ```
 
 There is no npm registry release. The package is marked private to prevent accidental registry publication; GitHub distribution is supported.
@@ -161,6 +161,19 @@ node bin/agent-eta.js compare --db .agent-eta/runs.sqlite --plan .agent-eta/coho
 Use ISO UTC values such as `2026-10-12T00:00:00Z`, choosing dates still in the future when you run the command. Check the command succeeds before using the plan. The manifest freezes completed tuning runs and their saved receipt IDs. Later-added tuning predictions are ignored, edited/deleted frozen rows cause an error, and pre-existing runs cannot enter holdout. New run **start times**, not finish times or prediction quality, determine holdout membership; unfinished runs remain visible even after the collection window ends.
 
 Reports include errors and availability by profile/class and fixed final-active-duration bands (<=5, >5–15, >15 minutes; unfinished/invalid duration is unknown). Duration bands are retrospective diagnostics, never prediction inputs. The original unplanned `compare` output is unchanged. No promotion gate is applied and the default model stays the same. A manifest is not proof of real use or an untouched holdout; do not tune on holdout reports, and keep plans/reports private. See the frozen [time-split protocol](docs/TIME-SPLIT.md).
+
+## Declare review targets before looking at new results
+
+To review the current empirical candidate, create a **fresh** gate plan before collection. Choose the exact workflow and future UTC bounds; replace the placeholders and save to a new local file:
+
+```sh
+node bin/agent-eta.js gate-plan --db .agent-eta/runs.sqlite --profile my-agent --class coding --holdout-start "FUTURE_START_UTC" --holdout-end "FUTURE_END_UTC" > .agent-eta/gate-plan.json
+node bin/agent-eta.js gate --db .agent-eta/runs.sqlite --plan .agent-eta/gate-plan.json
+```
+
+The plan freezes scope, model versions and the [review targets](docs/PROMOTION-GATE.md). Before the window closes, or while an in-scope task is unfinished, `gate` withholds accuracy metrics. It then checks every 1/5/10-minute landmark against the paired primary and median baseline: at least 30 pairs, at least 10 long-run pairs, 10% lower mean error, fewer severe underestimates, coverage/width limits and availability limits. These are engineering screening targets, not a power calculation. See the protocol for exact thresholds and boundaries.
+
+Outputs distinguish `awaiting_window`, `awaiting_outcomes`, `invalid_evidence`, `insufficient_evidence`, `targets_not_met` and `numeric_targets_met_pending_review`. Even the last status retains `promotionEligible: false`: independent real/untouched collection review is still required. Exit zero means a report was produced, not a pass. There is no model switch. Do not tune on an inspected holdout or reuse it as untouched; start a new future plan. Commands are local and read-only; save manifests/reports privately and record actual collector versions separately.
 
 ## Export records and check storage
 

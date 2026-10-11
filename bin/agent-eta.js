@@ -10,6 +10,7 @@ import { evaluateDatabase } from '../src/generic/evaluate.js';
 import { exportJournal, journalUsage } from '../src/generic/journal.js';
 import { compareDatabase } from '../src/generic/compare.js';
 import { createCohortPlan, compareCohortDatabase, readCohortPlan } from '../src/generic/cohort.js';
+import { createGatePlan, assessGateDatabase, readGatePlan } from '../src/generic/gate.js';
 
 const HELP = `Agent ETA — How long will your agent take?
 
@@ -21,6 +22,8 @@ Usage: agent-eta <command> [run-id] [options]
   evaluate                Read-only prospective evaluation as JSON (existing database)
   compare                 Compare saved shadow predictions on the same runs (read-only)
   cohort-plan             Freeze tuning membership and declare a future holdout (JSON)
+  gate-plan               Freeze review targets, scope and a fresh future window (JSON)
+  gate                    Check a completed holdout against its gate plan (read-only)
   export                  Stream the full portable journal as JSONL (read-only)
   usage                   Show record counts and database/WAL file bytes (read-only)
   ping <id>               Report that the caller is still active
@@ -33,13 +36,13 @@ Usage: agent-eta <command> [run-id] [options]
 Options:
   --db <path>             Database (or AGENT_ETA_TRACKER_DB; default .agent-eta/runs.sqlite)
   --port <number>         Dashboard port, 1–65535 (serve only; default: 4318)
-  --profile <identifier>  Separate agent/workflow history (default: default)
-  --class <class>         coding, research, review, writing, other (default: other)
+  --profile <identifier>  Separate history; required with gate-plan (start/run: default)
+  --class <class>         coding, research, review, writing, other (gate-plan: required)
   --outcome <outcome>     succeeded, failed, cancelled (finish only)
   --interval <seconds>   watch/run refresh interval, 1–30 (default: 5)
-  --holdout-start <UTC>   Future ISO UTC start, inclusive (cohort-plan only)
-  --holdout-end <UTC>     ISO UTC end, exclusive (cohort-plan only)
-  --plan <path>          Saved cohort-plan JSON (compare only; requires --cohort)
+  --holdout-start <UTC>   Future ISO UTC start, inclusive (cohort-plan / gate-plan)
+  --holdout-end <UTC>     ISO UTC end, exclusive (cohort-plan / gate-plan)
+  --plan <path>          Plan JSON: gate-plan for gate; cohort-plan for compare
   --cohort <name>        tuning or holdout (compare only; requires --plan)
   --help                 Show this help
 
@@ -113,20 +116,22 @@ try {
   if (values.help || !command || command === 'help') {
     process.stdout.write(HELP);
   } else {
-    const known = ['start', 'status', 'list', 'ping', 'pause', 'resume', 'finish', 'watch', 'run', 'serve', 'evaluate', 'export', 'usage', 'compare', 'cohort-plan'];
+    const known = ['start', 'status', 'list', 'ping', 'pause', 'resume', 'finish', 'watch', 'run', 'serve', 'evaluate', 'export', 'usage', 'compare', 'cohort-plan', 'gate-plan', 'gate'];
     if (!known.includes(command)) throw new Error('Unknown command; use --help');
-    const requiresId = !['start', 'list', 'run', 'serve', 'evaluate', 'export', 'usage', 'compare', 'cohort-plan'].includes(command);
+    const requiresId = !['start', 'list', 'run', 'serve', 'evaluate', 'export', 'usage', 'compare', 'cohort-plan', 'gate-plan', 'gate'].includes(command);
     if (positionals.length !== (requiresId ? 2 : 1)) throw new Error('Unexpected or missing argument; use --help');
     if (boundary >= 0 && command !== 'run') throw new Error('-- is only supported with run');
     const interval = Number(values.interval ?? 5);
     if (!Number.isFinite(interval) || interval < 1 || interval > 30) throw new Error('Interval must be between 1 and 30 seconds');
     if (values.outcome && command !== 'finish') throw new Error('--outcome is only supported with finish');
     if (values.port && command !== 'serve') throw new Error('--port is only supported with serve');
-    if ((values.profile || values.class) && !['start', 'run'].includes(command)) throw new Error('--profile and --class are only supported with start/run');
-    if ((values.plan !== undefined || values.cohort !== undefined)
+    if ((values.profile !== undefined || values.class !== undefined) && !['start', 'run', 'gate-plan'].includes(command)) throw new Error('--profile and --class are only supported with start/run/gate-plan');
+    if (command === 'gate') {
+      if (!values.plan || values.cohort !== undefined) throw new Error('gate requires --plan and does not accept --cohort');
+    } else if ((values.plan !== undefined || values.cohort !== undefined)
       && (command !== 'compare' || !values.plan || !values.cohort)) throw new Error('--plan and --cohort must be supplied together with compare');
-    if ((values['holdout-start'] !== undefined || values['holdout-end'] !== undefined) && command !== 'cohort-plan') {
-      throw new Error('--holdout-start and --holdout-end are only supported with cohort-plan');
+    if ((values['holdout-start'] !== undefined || values['holdout-end'] !== undefined) && !['cohort-plan', 'gate-plan'].includes(command)) {
+      throw new Error('--holdout-start and --holdout-end are only supported with cohort-plan/gate-plan');
     }
     if (command === 'export') await pipeline(Readable.from(exportJournal(values.db ?? defaultDatabasePath())), process.stdout, { end: false });
     else if (command === 'usage') emit(journalUsage(values.db ?? defaultDatabasePath()));
@@ -136,6 +141,9 @@ try {
       : compareDatabase(values.db ?? defaultDatabasePath()));
     else if (command === 'cohort-plan') emit(createCohortPlan(values.db ?? defaultDatabasePath(),
       { holdoutStart: values['holdout-start'], holdoutEnd: values['holdout-end'] }));
+    else if (command === 'gate-plan') emit(createGatePlan(values.db ?? defaultDatabasePath(),
+      { profile: values.profile, taskClass: values.class, holdoutStart: values['holdout-start'], holdoutEnd: values['holdout-end'] }));
+    else if (command === 'gate') emit(assessGateDatabase(values.db ?? defaultDatabasePath(), readGatePlan(values.plan)));
     else if (command === 'serve') process.exitCode = await serveDashboard(values);
     else {
       tracker = new AgentETA({ filename: values.db });
@@ -154,7 +162,7 @@ try {
     }
   }
 } catch (error) {
-  emit({ error: error.code === 'EPIPE' ? 'EXPORT_OUTPUT_CLOSED' : error.message }, process.stderr);
+  emit({ error: ['EPIPE', 'ENOTCONN'].includes(error.code) ? 'EXPORT_OUTPUT_CLOSED' : error.message }, process.stderr);
   process.exitCode = 1;
 } finally {
   tracker?.close();

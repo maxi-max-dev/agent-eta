@@ -82,7 +82,7 @@ function durationBand(run) {
 }
 
 /** Keeps each run in one cohort; never chooses using prediction error. */
-export function compareCohortDatabase(filename, manifest, cohort) {
+export function readCohortSnapshot(filename, manifest, cohort) {
   if (!['tuning', 'holdout'].includes(cohort)) throw new Error('INVALID_COHORT: choose tuning or holdout');
   const plan = validateCohortPlan(manifest);
   const source = readEvaluationSnapshot(filename);
@@ -101,6 +101,12 @@ export function compareCohortDatabase(filename, manifest, cohort) {
     membership[key].push(run.id);
   }
   const selected = cohort === 'tuning' ? tuning : subset(source, new Set(membership.holdout));
+  return { plan, source, membership, selected };
+}
+
+export function compareCohortDatabase(filename, manifest, cohort) {
+  const { plan, source, membership, selected } = readCohortSnapshot(filename, manifest, cohort);
+  const existing = new Set(source.runs.map(run => run.id));
   const comparison = compareSnapshot(selected);
   const strata = new Map();
   for (const run of selected.runs) {
