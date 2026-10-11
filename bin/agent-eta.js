@@ -11,6 +11,7 @@ import { exportJournal, journalUsage } from '../src/generic/journal.js';
 import { compareDatabase } from '../src/generic/compare.js';
 import { createCohortPlan, compareCohortDatabase, readCohortPlan } from '../src/generic/cohort.js';
 import { createGatePlan, assessGateDatabase, readGatePlan } from '../src/generic/gate.js';
+import { diagnose } from '../src/generic/doctor.js';
 
 const HELP = `Agent ETA — How long will your agent take?
 
@@ -18,6 +19,7 @@ Usage: agent-eta <command> [run-id] [options]
   start                   Begin a run; returns JSON with runId
   status <id>             Read a fresh estimate (does not send a heartbeat)
   list                    Read the latest 50 runs
+  doctor                  Diagnose paths and scoped history without creating data
   serve                   Open a local dashboard for the same database
   evaluate                Read-only prospective evaluation as JSON (existing database)
   compare                 Compare saved shadow predictions on the same runs (read-only)
@@ -35,7 +37,7 @@ Usage: agent-eta <command> [run-id] [options]
 
 Options:
   --db <path>             Database (or AGENT_ETA_TRACKER_DB; default .agent-eta/runs.sqlite)
-  --port <number>         Dashboard port, 1–65535 (serve only; default: 4318)
+  --port <number>         Dashboard port, 1–65535 (serve/doctor; default: 4318)
   --profile <identifier>  Separate history; required with gate-plan (start/run: default)
   --class <class>         coding, research, review, writing, other (gate-plan: required)
   --outcome <outcome>     succeeded, failed, cancelled (finish only)
@@ -116,16 +118,16 @@ try {
   if (values.help || !command || command === 'help') {
     process.stdout.write(HELP);
   } else {
-    const known = ['start', 'status', 'list', 'ping', 'pause', 'resume', 'finish', 'watch', 'run', 'serve', 'evaluate', 'export', 'usage', 'compare', 'cohort-plan', 'gate-plan', 'gate'];
+    const known = ['start', 'status', 'list', 'ping', 'pause', 'resume', 'finish', 'watch', 'run', 'serve', 'evaluate', 'export', 'usage', 'compare', 'cohort-plan', 'gate-plan', 'gate', 'doctor'];
     if (!known.includes(command)) throw new Error('Unknown command; use --help');
-    const requiresId = !['start', 'list', 'run', 'serve', 'evaluate', 'export', 'usage', 'compare', 'cohort-plan', 'gate-plan', 'gate'].includes(command);
+    const requiresId = !['start', 'list', 'run', 'serve', 'evaluate', 'export', 'usage', 'compare', 'cohort-plan', 'gate-plan', 'gate', 'doctor'].includes(command);
     if (positionals.length !== (requiresId ? 2 : 1)) throw new Error('Unexpected or missing argument; use --help');
     if (boundary >= 0 && command !== 'run') throw new Error('-- is only supported with run');
     const interval = Number(values.interval ?? 5);
     if (!Number.isFinite(interval) || interval < 1 || interval > 30) throw new Error('Interval must be between 1 and 30 seconds');
     if (values.outcome && command !== 'finish') throw new Error('--outcome is only supported with finish');
-    if (values.port && command !== 'serve') throw new Error('--port is only supported with serve');
-    if ((values.profile !== undefined || values.class !== undefined) && !['start', 'run', 'gate-plan'].includes(command)) throw new Error('--profile and --class are only supported with start/run/gate-plan');
+    if (values.port !== undefined && !['serve', 'doctor'].includes(command)) throw new Error('--port is only supported with serve/doctor');
+    if ((values.profile !== undefined || values.class !== undefined) && !['start', 'run', 'gate-plan', 'doctor'].includes(command)) throw new Error('--profile and --class are only supported with start/run/gate-plan/doctor');
     if (command === 'gate') {
       if (!values.plan || values.cohort !== undefined) throw new Error('gate requires --plan and does not accept --cohort');
     } else if ((values.plan !== undefined || values.cohort !== undefined)
@@ -133,7 +135,11 @@ try {
     if ((values['holdout-start'] !== undefined || values['holdout-end'] !== undefined) && !['cohort-plan', 'gate-plan'].includes(command)) {
       throw new Error('--holdout-start and --holdout-end are only supported with cohort-plan/gate-plan');
     }
-    if (command === 'export') await pipeline(Readable.from(exportJournal(values.db ?? defaultDatabasePath())), process.stdout, { end: false });
+    if (command === 'doctor') {
+      const result = diagnose({ filename: values.db, profile: values.profile, taskClass: values.class, port: Number(values.port ?? 4318) });
+      emit(result);
+      if (result.status === 'blocked') process.exitCode = 1;
+    } else if (command === 'export') await pipeline(Readable.from(exportJournal(values.db ?? defaultDatabasePath())), process.stdout, { end: false });
     else if (command === 'usage') emit(journalUsage(values.db ?? defaultDatabasePath()));
     else if (command === 'evaluate') emit(evaluateDatabase(values.db ?? defaultDatabasePath()));
     else if (command === 'compare') emit(values.plan

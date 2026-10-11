@@ -11,10 +11,27 @@ export const TASK_CLASSES = ['coding', 'research', 'review', 'writing', 'other']
 export const MODEL_VERSION = 'conditional-lognormal/1';
 const TERMINAL = new Set(['succeeded', 'failed', 'cancelled']);
 
-export function defaultDatabasePath() {
-  return process.env.AGENT_ETA_TRACKER_DB || process.env.AGENTWHEN_DB
-    || (existsSync(resolve('.agentwhen', 'runs.sqlite'))
-      ? resolve('.agentwhen', 'runs.sqlite') : resolve('.agent-eta', 'runs.sqlite'));
+export function databaseSelection(filename) {
+  if (filename !== undefined) return { filename, source: 'argument' };
+  for (const key of ['AGENT_ETA_TRACKER_DB', 'AGENTWHEN_DB']) {
+    if (process.env[key]) return { filename: process.env[key], source: key };
+  }
+  const legacy = resolve('.agentwhen', 'runs.sqlite');
+  return existsSync(legacy) ? { filename: legacy, source: 'legacy_directory' }
+    : { filename: resolve('.agent-eta', 'runs.sqlite'), source: 'working_directory' };
+}
+
+export function defaultDatabasePath() { return databaseSelection().filename; }
+
+/** Shared by prediction and read-only onboarding; never creates forecasts. */
+export function eligibleHistory(db, profile, taskClass, at, excludeId = null) {
+  return db.prepare(`SELECT active_ms FROM agentwhen_runs
+    WHERE profile = ? AND task_class = ? AND status = 'succeeded'
+      AND history_eligible = 1 AND active_ms > 0 AND finished_at <= ?
+      AND (? IS NULL OR id != ?)
+    ORDER BY finished_at DESC, rowid DESC LIMIT 200`)
+    .all(profile, taskClass, at, excludeId, excludeId)
+    .map(item => ({ actualMinutes: item.active_ms / 60_000, taskClass }));
 }
 
 /** Local, opt-in metadata only. No prompts, commands, outputs or provider logs. */
@@ -114,12 +131,7 @@ export class AgentETA {
   project(row, at) {
     const now = Math.max(at, row.last_seen);
     const activeMs = row.active_ms + (row.status === 'running' ? Math.max(0, now - row.active_since) : 0);
-    const history = this.db.prepare(`SELECT active_ms FROM agentwhen_runs
-      WHERE profile = ? AND task_class = ? AND status = 'succeeded'
-        AND history_eligible = 1 AND active_ms > 0 AND finished_at <= ? AND id != ?
-      ORDER BY finished_at DESC, rowid DESC LIMIT 200`)
-      .all(row.profile, row.task_class, now, row.id)
-      .map(item => ({ actualMinutes: item.active_ms / 60_000, taskClass: row.task_class }));
+    const history = eligibleHistory(this.db, row.profile, row.task_class, now, row.id);
     const stale = row.status === 'running' && now - row.last_seen > STALE_AFTER_MS;
     const estimateStatus = TERMINAL.has(row.status) ? 'terminal'
       : row.status === 'paused' ? 'paused' : stale ? 'stale'

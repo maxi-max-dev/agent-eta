@@ -7,6 +7,8 @@ Use the repository's `bin/agent-eta.js` with Node.js 22.13+ (or an already insta
 
 Choose a stable lowercase `--profile` identifier for this agent/workflow and a `--class` from `coding`, `research`, `review`, `writing`, `other`. Use a single absolute `--db` path across calls and working directories. Do not put user identities, task text or secrets into metadata. Read `--help` when needed.
 
+Before the first run or when the working directory changes, use `doctor --db DATABASE --profile PROFILE --class CLASS`. It creates no data and reports the resolved database path, its selection source and matching history count. Retain `database.path`; the `commands` arrays can be executed with an argument-based process tool, without joining them into a shell string. `not_initialized` means the first tracking command will create the store. `blocked` needs a readable tracker database or a new path; never overwrite a foreign or corrupt file. `ready` only confirms a readable schema, and the dashboard address is not a claim that a server is running. Re-run diagnosis if the CLI installation moves.
+
 For one synchronous command, use:
 
 ```sh

@@ -6,7 +6,7 @@ Local, experimental runtime estimates for agents. Track a bounded run and see re
 
 [中文说明](README.zh-CN.md) · [Agent skill](skills/agent-eta/SKILL.md) · [Roadmap](ROADMAP.md)
 
-> **v0.7.0 is experimental.** Runtime visibility and prospective evaluation work; general prediction accuracy is not established. This tool does not validate the quality of an agent's work.
+> **v0.8.0 is experimental.** Runtime visibility and prospective evaluation work; general prediction accuracy is not established. This tool does not validate the quality of an agent's work.
 
 ## Run in two minutes
 
@@ -16,6 +16,7 @@ Requires **Node.js 22.13+**. Node 22 may print an experimental SQLite warning. N
 git clone https://github.com/maxi-max-dev/agent-eta.git
 cd agent-eta
 node bin/agent-eta.js --help
+node bin/agent-eta.js doctor --profile wiring-test --class coding
 node bin/agent-eta.js run --profile wiring-test --class coding -- node -e "setTimeout(() => console.log('done'), 1500)"
 ```
 
@@ -24,10 +25,22 @@ That short command checks wiring, not accuracy. Replace everything after `--` wi
 Or use the pinned GitHub package (Git and npm required; first use downloads it):
 
 ```sh
-npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.7.0 -- agent-eta --help
+npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.8.0 -- agent-eta --help
 ```
 
 There is no npm registry release. The package is marked private to prevent accidental registry publication; GitHub distribution is supported.
+
+## Check the connection before starting
+
+`doctor` explains which database is selected and why a workflow has no number, without creating a database, recording forecasts or sending heartbeats:
+
+```sh
+node bin/agent-eta.js doctor --db /absolute/path/runs.sqlite --profile my-agent --class coding
+```
+
+Retain `database.path` across tool calls. `history` reports matching eligible successes (up to the same 200 used by the predictor) and how many remain before the three-run cold-start threshold. Other profiles, failed/cancelled runs and observation gaps do not warm up this workflow. No test runs are needed to make it look ready.
+
+`not_initialized` is normal for a new path; the first `start`/`run` creates it. `ready` means its schema is readable, not that writes, accuracy or native agent integration are verified. `blocked` exits with code 1 and does not repair the file. The `commands` values are argument arrays for `spawn`/`subprocess`; execute them as arrays, or quote each argument for your shell. They fix both CLI and database paths, including paths with spaces. `dashboard.status` stays `not_checked`; run `commands.serve` before opening its URL. Keep the local report private because it contains filesystem paths. See [onboarding and verified integration boundaries](docs/ONBOARDING.md).
 
 ## Give it to an agent
 

@@ -4,7 +4,7 @@
 
 在本机记录有明确边界的 Agent 运行，结合相似历史估计剩余时间。提供命令行、JavaScript 接口和可携带的 Skill，无需账号、API Key 或运行依赖。
 
-这是 **v0.7.0 实验版本**：接入、状态、估计和前瞻评测可用，跨用户的预测准确度尚未建立。它不判断 Agent 的答案或代码是否合格。
+这是 **v0.8.0 实验版本**：接入、状态、估计和前瞻评测可用，跨用户的预测准确度尚未建立。它不判断 Agent 的答案或代码是否合格。
 
 ## 两分钟跑起来
 
@@ -14,6 +14,7 @@
 git clone https://github.com/maxi-max-dev/agent-eta.git
 cd agent-eta
 node bin/agent-eta.js --help
+node bin/agent-eta.js doctor --profile wiring-test --class coding
 node bin/agent-eta.js run --profile wiring-test --class coding -- node -e "setTimeout(() => console.log('done'), 1500)"
 ```
 
@@ -22,10 +23,22 @@ node bin/agent-eta.js run --profile wiring-test --class coding -- node -e "setTi
 也可从固定 GitHub 版本直接运行，需要 npm 和 Git，首次会下载包：
 
 ```sh
-npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.7.0 -- agent-eta --help
+npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.8.0 -- agent-eta --help
 ```
 
 当前只发布 GitHub，没有发布到 npm registry。
+
+## 先确认接到了哪份数据
+
+`doctor` 会解释当前数据库的实际位置，以及这个工作流为什么还没有数字。它不创建数据库、不保存预测，也不上报心跳：
+
+```sh
+node bin/agent-eta.js doctor --db /绝对路径/runs.sqlite --profile my-agent --class coding
+```
+
+后续每次调用都使用返回的 `database.path`。`history` 显示同 profile/class 的有效成功历史数量（与预测器一样最多取 200 次），以及距离 3 次冷启动门槛还差多少。其他工作流、失败、取消和观测中断的运行不会用来凑数，不必制造测试任务预热。
+
+新路径返回 `not_initialized` 是正常情况，第一次 `start`/`run` 才创建库。`ready` 只说明数据库结构可读，不代表写权限、准确度或厂商原生接入已验证。`blocked` 的退出码为 1，不会修复或覆盖文件。`commands` 返回可直接传给 `spawn`/`subprocess` 的参数数组，固定 CLI 和数据库绝对路径；路径含空格也能使用，请勿直接拼成未经转义的 shell 字符串。看板地址标为 `not_checked`，执行 `commands.serve` 后才去打开。报告含本机路径，请留在本地。详见[接入说明与验证边界](docs/ONBOARDING.md)。
 
 ## 让 Agent 自己接入
 
