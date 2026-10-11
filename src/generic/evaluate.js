@@ -19,7 +19,7 @@ const median = values => {
   return sorted[Math.floor((sorted.length - 1) / 2)] / 2 + sorted[Math.floor(sorted.length / 2)] / 2;
 };
 
-function validRun(run) {
+export function validRun(run) {
   return typeof run.id === 'string' && typeof run.profile === 'string' && typeof run.task_class === 'string'
     && time(run.started_at) && nonnegative(run.active_ms)
     && [0, 1].includes(run.history_eligible)
@@ -207,9 +207,13 @@ export function evaluateSnapshot({ runs, receipts, hasJournal }) {
   for (const run of runs) outcomes[Object.hasOwn(outcomes, run.status) ? run.status : 'unknown']++;
   return { schema: 'agent-eta.evaluation/1', protocol: PROTOCOL, units: 'active_minutes',
     provenance: 'supplied_receipts_not_independently_verified',
-    sourceFingerprint: hash(JSON.stringify({ runs, receipts })), journal: hasJournal ? 'present' : 'missing_journal',
+    sourceFingerprint: snapshotFingerprint({ runs, receipts }), journal: hasJournal ? 'present' : 'missing_journal',
     population: { totalRuns: runs.length, outcomes, closedRuns: closed.length, pendingRuns: valid.length - closed.length,
       invalidRuns: runs.length - valid.length, receipts: receipts.length,
       orphanReceipts: receipts.filter(row => !runIds.has(row.run_id)).length },
     landmarks: LANDMARKS.map(landmark => landmarkReport(closed, byRun, landmark)) };
+}
+
+export function snapshotFingerprint({ runs, receipts }) {
+  return hash(JSON.stringify({ runs, receipts }));
 }

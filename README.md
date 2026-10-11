@@ -6,7 +6,7 @@ Local, experimental runtime estimates for agents. Track a bounded run and see re
 
 [中文说明](README.zh-CN.md) · [Agent skill](skills/agent-eta/SKILL.md) · [Roadmap](ROADMAP.md)
 
-> **v0.5.0 is experimental.** Runtime visibility and prospective evaluation work; general prediction accuracy is not established. This tool does not validate the quality of an agent's work.
+> **v0.6.0 is experimental.** Runtime visibility and prospective evaluation work; general prediction accuracy is not established. This tool does not validate the quality of an agent's work.
 
 ## Run in two minutes
 
@@ -24,7 +24,7 @@ That short command checks wiring, not accuracy. Replace everything after `--` wi
 Or use the pinned GitHub package (Git and npm required; first use downloads it):
 
 ```sh
-npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.5.0 -- agent-eta --help
+npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.6.0 -- agent-eta --help
 ```
 
 There is no npm registry release. The package is marked private to prevent accidental registry publication; GitHub distribution is supported.
@@ -146,6 +146,21 @@ This read-only report uses the same fixed landmarks as `evaluate`, and compares 
 Old receipts without shadow fields remain `missing_shadow`; the command never regenerates old predictions or consults future history. The report always has `promotionEligible: false`: synthetic replay verifies the pipeline, while a predeclared future holdout and real accuracy evidence remain pending. See the frozen [shadow comparison protocol](docs/SHADOW-COMPARISON.md).
 
 New receipts store up to 200 history durations per estimate, adding bounded per-receipt storage. These are local duration metadata, not prompts or commands; `usage` measures the bytes and `export` preserves them. Receipt IDs change with the additional content, while historical receipts remain untouched.
+
+## Freeze tuning runs before a future comparison
+
+Use an existing local database. Replace the two UTC placeholders with a future collection window (start inclusive, end exclusive), and save the plan to a **new** file before collecting:
+
+```sh
+node bin/agent-eta.js cohort-plan --db .agent-eta/runs.sqlite --holdout-start "FUTURE_START_UTC" --holdout-end "FUTURE_END_UTC" > .agent-eta/cohort-plan.json
+node bin/agent-eta.js compare --db .agent-eta/runs.sqlite --plan .agent-eta/cohort-plan.json --cohort tuning
+# After collecting new runs in that window:
+node bin/agent-eta.js compare --db .agent-eta/runs.sqlite --plan .agent-eta/cohort-plan.json --cohort holdout
+```
+
+Use ISO UTC values such as `2026-10-12T00:00:00Z`, choosing dates still in the future when you run the command. Check the command succeeds before using the plan. The manifest freezes completed tuning runs and their saved receipt IDs. Later-added tuning predictions are ignored, edited/deleted frozen rows cause an error, and pre-existing runs cannot enter holdout. New run **start times**, not finish times or prediction quality, determine holdout membership; unfinished runs remain visible even after the collection window ends.
+
+Reports include errors and availability by profile/class and fixed final-active-duration bands (<=5, >5–15, >15 minutes; unfinished/invalid duration is unknown). Duration bands are retrospective diagnostics, never prediction inputs. The original unplanned `compare` output is unchanged. No promotion gate is applied and the default model stays the same. A manifest is not proof of real use or an untouched holdout; do not tune on holdout reports, and keep plans/reports private. See the frozen [time-split protocol](docs/TIME-SPLIT.md).
 
 ## Export records and check storage
 

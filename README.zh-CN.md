@@ -4,7 +4,7 @@
 
 在本机记录有明确边界的 Agent 运行，结合相似历史估计剩余时间。提供命令行、JavaScript 接口和可携带的 Skill，无需账号、API Key 或运行依赖。
 
-这是 **v0.5.0 实验版本**：接入、状态、估计和前瞻评测可用，跨用户的预测准确度尚未建立。它不判断 Agent 的答案或代码是否合格。
+这是 **v0.6.0 实验版本**：接入、状态、估计和前瞻评测可用，跨用户的预测准确度尚未建立。它不判断 Agent 的答案或代码是否合格。
 
 ## 两分钟跑起来
 
@@ -22,7 +22,7 @@ node bin/agent-eta.js run --profile wiring-test --class coding -- node -e "setTi
 也可从固定 GitHub 版本直接运行，需要 npm 和 Git，首次会下载包：
 
 ```sh
-npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.5.0 -- agent-eta --help
+npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.6.0 -- agent-eta --help
 ```
 
 当前只发布 GitHub，没有发布到 npm registry。
@@ -117,6 +117,21 @@ node bin/agent-eta.js compare --db /绝对路径/runs.sqlite
 旧记录缺少候选时显示 `missing_shadow`，不会事后补造预测或用未来历史重算。报告固定标记 `promotionEligible: false`：受控回放已验证管线，独立未来验证集和真实效果仍待完成，默认算法不替换。规则见实现前冻结的 [影子比较协议](docs/SHADOW-COMPARISON.md)。
 
 每条新预测最多保存 200 个历史耗时数值，会增加存储；仅是本机时长元数据，不含提示词或命令。可用 `usage` 查看、`export` 保存。新增内容会改变新预测的内容哈希 ID，旧记录保持原样。
+
+## 先冻结旧样本，再检验新运行
+
+v0.6.0 新增按完整运行切分的评测计划。使用已有数据库，把下面两个占位符替换成未来的 UTC 时间（例如 `2026-10-12T00:00:00Z`，实际执行时应仍在未来），先保存到一个**新文件**：
+
+```sh
+node bin/agent-eta.js cohort-plan --db .agent-eta/runs.sqlite --holdout-start "FUTURE_START_UTC" --holdout-end "FUTURE_END_UTC" > .agent-eta/cohort-plan.json
+node bin/agent-eta.js compare --db .agent-eta/runs.sqlite --plan .agent-eta/cohort-plan.json --cohort tuning
+# 在约定窗口收集新运行后：
+node bin/agent-eta.js compare --db .agent-eta/runs.sqlite --plan .agent-eta/cohort-plan.json --cohort holdout
+```
+
+先确认计划命令成功，再使用文件。计划冻结当时已经结束的调参运行及其预测清单；之后补写的旧运行预测不会计入，修改或移除冻结记录会报错。验证集只纳入窗口内新启动的运行（含起点、不含终点），不能根据结束时间、误差或是否有数字挑选；同一次运行的所有预测点始终属于同一集合。窗口结束时还没做完的运行仍会列出。
+
+报告按 profile、任务类别以及最终活跃耗时（≤5、>5–15、>15 分钟）分别展示误差、可用率与历史不足；未完成或无效时长列为 unknown。耗时分层只用于事后诊断，不是预测输入。原有不带计划的 `compare` 保持兼容。**这一步建立可复算的划分，未证明真实效果，也不自动替换默认模型。** 已查看的验证结果不能再用于调参后冒充未触碰数据；计划和报告含本机元数据，请保留在本地。细则见 [时间切分协议](docs/TIME-SPLIT.md)。
 
 ## 导出记录、查看空间
 

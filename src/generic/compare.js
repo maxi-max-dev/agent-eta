@@ -50,7 +50,10 @@ function summarizeComparison(group, landmark) {
 
 /** Only saved forecasts are scored. No predictor or history rebuild runs here. */
 export function compareDatabase(filename) {
-  const source = readEvaluationSnapshot(filename);
+  return compareSnapshot(readEvaluationSnapshot(filename));
+}
+
+export function compareSnapshot(source) {
   const primary = evaluateSnapshot(source);
   const rows = new Map(source.receipts.map(row => [row.id, row]));
   const runs = new Map(source.runs.map(row => [row.id, row]));

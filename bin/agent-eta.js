@@ -9,6 +9,7 @@ import { AgentETA, defaultDatabasePath } from '../src/generic/tracker.js';
 import { evaluateDatabase } from '../src/generic/evaluate.js';
 import { exportJournal, journalUsage } from '../src/generic/journal.js';
 import { compareDatabase } from '../src/generic/compare.js';
+import { createCohortPlan, compareCohortDatabase, readCohortPlan } from '../src/generic/cohort.js';
 
 const HELP = `Agent ETA — How long will your agent take?
 
@@ -19,6 +20,7 @@ Usage: agent-eta <command> [run-id] [options]
   serve                   Open a local dashboard for the same database
   evaluate                Read-only prospective evaluation as JSON (existing database)
   compare                 Compare saved shadow predictions on the same runs (read-only)
+  cohort-plan             Freeze tuning membership and declare a future holdout (JSON)
   export                  Stream the full portable journal as JSONL (read-only)
   usage                   Show record counts and database/WAL file bytes (read-only)
   ping <id>               Report that the caller is still active
@@ -35,6 +37,10 @@ Options:
   --class <class>         coding, research, review, writing, other (default: other)
   --outcome <outcome>     succeeded, failed, cancelled (finish only)
   --interval <seconds>   watch/run refresh interval, 1–30 (default: 5)
+  --holdout-start <UTC>   Future ISO UTC start, inclusive (cohort-plan only)
+  --holdout-end <UTC>     ISO UTC end, exclusive (cohort-plan only)
+  --plan <path>          Saved cohort-plan JSON (compare only; requires --cohort)
+  --cohort <name>        tuning or holdout (compare only; requires --plan)
   --help                 Show this help
 
 No network, API key or provider plugin. Requires Node.js >= 22.13.
@@ -99,15 +105,17 @@ try {
   const { values, positionals } = parseArgs({
     args: boundary < 0 ? argv : argv.slice(0, boundary), allowPositionals: true, strict: true,
     options: { db: { type: 'string' }, profile: { type: 'string' }, class: { type: 'string' },
-      outcome: { type: 'string' }, interval: { type: 'string' }, port: { type: 'string' }, help: { type: 'boolean' } },
+      outcome: { type: 'string' }, interval: { type: 'string' }, port: { type: 'string' }, help: { type: 'boolean' },
+      plan: { type: 'string' }, cohort: { type: 'string' },
+      'holdout-start': { type: 'string' }, 'holdout-end': { type: 'string' } },
   });
   const [command, id] = positionals;
   if (values.help || !command || command === 'help') {
     process.stdout.write(HELP);
   } else {
-    const known = ['start', 'status', 'list', 'ping', 'pause', 'resume', 'finish', 'watch', 'run', 'serve', 'evaluate', 'export', 'usage', 'compare'];
+    const known = ['start', 'status', 'list', 'ping', 'pause', 'resume', 'finish', 'watch', 'run', 'serve', 'evaluate', 'export', 'usage', 'compare', 'cohort-plan'];
     if (!known.includes(command)) throw new Error('Unknown command; use --help');
-    const requiresId = !['start', 'list', 'run', 'serve', 'evaluate', 'export', 'usage', 'compare'].includes(command);
+    const requiresId = !['start', 'list', 'run', 'serve', 'evaluate', 'export', 'usage', 'compare', 'cohort-plan'].includes(command);
     if (positionals.length !== (requiresId ? 2 : 1)) throw new Error('Unexpected or missing argument; use --help');
     if (boundary >= 0 && command !== 'run') throw new Error('-- is only supported with run');
     const interval = Number(values.interval ?? 5);
@@ -115,10 +123,19 @@ try {
     if (values.outcome && command !== 'finish') throw new Error('--outcome is only supported with finish');
     if (values.port && command !== 'serve') throw new Error('--port is only supported with serve');
     if ((values.profile || values.class) && !['start', 'run'].includes(command)) throw new Error('--profile and --class are only supported with start/run');
+    if ((values.plan !== undefined || values.cohort !== undefined)
+      && (command !== 'compare' || !values.plan || !values.cohort)) throw new Error('--plan and --cohort must be supplied together with compare');
+    if ((values['holdout-start'] !== undefined || values['holdout-end'] !== undefined) && command !== 'cohort-plan') {
+      throw new Error('--holdout-start and --holdout-end are only supported with cohort-plan');
+    }
     if (command === 'export') await pipeline(Readable.from(exportJournal(values.db ?? defaultDatabasePath())), process.stdout, { end: false });
     else if (command === 'usage') emit(journalUsage(values.db ?? defaultDatabasePath()));
     else if (command === 'evaluate') emit(evaluateDatabase(values.db ?? defaultDatabasePath()));
-    else if (command === 'compare') emit(compareDatabase(values.db ?? defaultDatabasePath()));
+    else if (command === 'compare') emit(values.plan
+      ? compareCohortDatabase(values.db ?? defaultDatabasePath(), readCohortPlan(values.plan), values.cohort)
+      : compareDatabase(values.db ?? defaultDatabasePath()));
+    else if (command === 'cohort-plan') emit(createCohortPlan(values.db ?? defaultDatabasePath(),
+      { holdoutStart: values['holdout-start'], holdoutEnd: values['holdout-end'] }));
     else if (command === 'serve') process.exitCode = await serveDashboard(values);
     else {
       tracker = new AgentETA({ filename: values.db });
