@@ -4,7 +4,7 @@
 
 在本机记录有明确边界的 Agent 运行，结合相似历史估计剩余时间。提供命令行、JavaScript 接口和可携带的 Skill，无需账号、API Key 或运行依赖。
 
-这是 **v0.9.0 实验版本**：接入、状态、估计和前瞻评测可用，跨用户的预测准确度尚未建立。它不判断 Agent 的答案或代码是否合格。
+这是 **v0.9.1 实验版本**：接入、状态、估计和前瞻评测可用，跨用户的预测准确度尚未建立。它不判断 Agent 的答案或代码是否合格。
 
 ## 两分钟跑起来
 
@@ -23,7 +23,7 @@ node bin/agent-eta.js run --profile wiring-test --class coding -- node -e "setTi
 也可从固定 GitHub 版本直接运行，需要 npm 和 Git，首次会下载包：
 
 ```sh
-npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.9.0 -- agent-eta --help
+npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.9.1 -- agent-eta --help
 ```
 
 当前只发布 GitHub，没有发布到 npm registry。

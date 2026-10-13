@@ -54,3 +54,7 @@ Filesystem lengths are sampled **before opening the read transaction**, not atom
 | Delete receipts older than an explicit cutoff, e.g. 30 or 90 days | Design option only, **not implemented or enabled** | Would require an agreed cutoff, protection for ongoing runs, verified recoverable archives and preserved sampling denominators before implementation. It can remove evidence and change evaluation populations. |
 
 This release implements measurement and export only. It sets no automatic expiry, pruning or compaction schedule. Selecting a future retention policy is separate from showing how much space is used. The [prospective protocol](PROSPECTIVE-EVALUATION.md) and prediction algorithm are unchanged.
+
+## Dashboard list cost
+
+Starting with v0.9.1, the writable tracker adds a start-time index to avoid sorting the entire run table for each latest-50 dashboard list. Existing run and forecast rows are preserved; the first writable open builds the index and uses additional space. Read-only export, usage and doctor do not migrate the store. See [the reproducible synthetic benchmark](LIST-PERFORMANCE.md) for timings, storage cost and limits. Retention and forecast recording are unchanged.

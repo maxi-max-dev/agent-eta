@@ -51,6 +51,9 @@ export class AgentETA {
       );
       CREATE INDEX IF NOT EXISTS agentwhen_cohort
         ON agentwhen_runs(profile, task_class, status, finished_at);
+      -- SQLite's implicit rowid suffix preserves newest-insertion tie breaks
+      -- when scanning this index backwards for the latest 50 runs.
+      CREATE INDEX IF NOT EXISTS agentwhen_started ON agentwhen_runs(started_at);
       CREATE TABLE IF NOT EXISTS eta_forecasts (
         id TEXT PRIMARY KEY, run_id TEXT NOT NULL, estimated_at INTEGER NOT NULL,
         active_ms REAL NOT NULL, estimate_status TEXT NOT NULL,
