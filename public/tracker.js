@@ -1,3 +1,5 @@
+import { onboardingCommand } from './command.js';
+
 const LABELS = { coding: '开发', research: '研究', review: '审查', writing: '写作', other: '其他' };
 const OUTCOMES = { succeeded: '已完成', failed: '运行失败', cancelled: '已取消' };
 const minutes = value => value < 1 ? '不到 1 分钟' : `${Math.round(value)} 分钟`;
@@ -18,7 +20,18 @@ if (typeof document !== 'undefined') {
   let selected = null;
   let runs = [];
   let connected = false;
+  let setup = null;
+  let shellChosen = false;
   const time = iso => new Date(iso).toLocaleTimeString('zh-CN', { hour12: false });
+  function renderSetup() {
+    if (!shellChosen && setup?.shell) el('setup-shell').value = setup.shell;
+    const command = onboardingCommand(setup, el('setup-shell').value);
+    const text = command || '暂时无法生成命令。请在安装目录运行 doctor，确认使用同一份数据库。';
+    if (el('setup-command').textContent !== text) el('copy-status').textContent = '';
+    el('setup-command').textContent = text;
+    el('setup-database').textContent = setup?.database?.path ?? '暂不可用';
+    el('copy-command').disabled = !connected || !command;
+  }
   function render() {
     const run = runs.find(item => item.runId === selected) ?? null;
     const view = presentation(run);
@@ -27,6 +40,7 @@ if (typeof document !== 'undefined') {
     el('range').hidden = !view.numeric;
     el('facts').hidden = !run;
     el('setup').hidden = Boolean(run);
+    renderSetup();
     el('receipt').hidden = !run?.forecastId;
     el('run-label').textContent = run ? `${run.profile} · ${LABELS[run.taskClass] ?? run.taskClass}` : '本机运行 · 实验版本';
     if (run) {
@@ -39,6 +53,7 @@ if (typeof document !== 'undefined') {
   }
   function disconnected() {
     connected = false;
+    setup = null;
     el('connection').textContent = '连接中断 · 正在重试';
     el('connection').dataset.state = 'error';
     el('headline').textContent = '本机服务暂不可用';
@@ -46,7 +61,20 @@ if (typeof document !== 'undefined') {
     el('range').hidden = true;
     el('facts').hidden = true;
     el('receipt').hidden = true;
+    el('setup').hidden = true;
+    el('copy-command').disabled = true;
   }
+  el('setup-shell').addEventListener('change', () => { shellChosen = true; renderSetup(); });
+  el('copy-command').addEventListener('click', async () => {
+    const command = onboardingCommand(setup, el('setup-shell').value);
+    if (!connected || !command) return;
+    try {
+      await navigator.clipboard.writeText(command);
+      if (connected && command === onboardingCommand(setup, el('setup-shell').value)) el('copy-status').textContent = '已复制，替换 COMMAND 后运行';
+    } catch {
+      if (connected) el('copy-status').textContent = '无法访问剪贴板，请手动选择下方命令复制';
+    }
+  });
   el('run-select').addEventListener('change', event => { selected = event.target.value; if (connected) render(); else disconnected(); });
   async function poll() {
     try {
@@ -55,6 +83,7 @@ if (typeof document !== 'undefined') {
       const body = await response.json();
       if (!body.enabled) throw new Error('disabled');
       runs = body.runs;
+      setup = body.setup ?? null;
       connected = true;
       if (!runs.some(run => run.runId === selected)) selected = runs.find(run => run.status === 'running')?.runId ?? runs[0]?.runId ?? null;
       el('run-select').replaceChildren(...runs.map(run => {

@@ -18,6 +18,7 @@ import {
 import { applyReporterObservation } from '../reporter/ingest.js';
 import { AgentEtaDatabase } from '../storage/database.js';
 import { AgentETA, defaultDatabasePath } from '../generic/tracker.js';
+import { diagnose } from '../generic/doctor.js';
 import { writeWeeklyEvaluation } from '../../scripts/evaluate-weekly.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -1667,7 +1668,15 @@ export function createApp({
           return;
         }
         response.setHeader('Cache-Control', 'no-store');
-        responseJson(response, 200, { enabled: Boolean(tracker), runs: tracker?.list() ?? [] });
+        const runs = tracker?.list() ?? [];
+        let setup = null;
+        if (tracker && !runs.length && trackerDatabasePath !== ':memory:') {
+          // The same local-origin guard protects these local filesystem paths.
+          // Resolve from the actual server configuration, never a URL parameter.
+          setup = { ...diagnose({ filename: trackerDatabasePath, profile: 'my-agent', taskClass: 'coding', port }),
+            shell: process.platform === 'win32' ? 'powershell' : 'posix' };
+        }
+        responseJson(response, 200, { enabled: Boolean(tracker), runs, setup });
         return;
       }
       if (request.method === 'GET' && url.pathname === '/api/health') {

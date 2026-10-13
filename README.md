@@ -6,7 +6,7 @@ Local, experimental runtime estimates for agents. Track a bounded run and see re
 
 [中文说明](README.zh-CN.md) · [Agent skill](skills/agent-eta/SKILL.md) · [Roadmap](ROADMAP.md)
 
-> **v0.8.0 is experimental.** Runtime visibility and prospective evaluation work; general prediction accuracy is not established. This tool does not validate the quality of an agent's work.
+> **v0.9.0 is experimental.** Runtime visibility and prospective evaluation work; general prediction accuracy is not established. This tool does not validate the quality of an agent's work.
 
 ## Run in two minutes
 
@@ -25,7 +25,7 @@ That short command checks wiring, not accuracy. Replace everything after `--` wi
 Or use the pinned GitHub package (Git and npm required; first use downloads it):
 
 ```sh
-npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.8.0 -- agent-eta --help
+npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.9.0 -- agent-eta --help
 ```
 
 There is no npm registry release. The package is marked private to prevent accidental registry publication; GitHub distribution is supported.
@@ -106,6 +106,8 @@ npm start
 ```
 
 Open **http://127.0.0.1:4318**. The homepage shows portable CLI/SDK runs from the same database, refreshing every 5 seconds. It never sends heartbeats on behalf of the agent. Use the “演示 / Codex 观察” link for the synthetic replay and optional Codex observer. Default startup does not read provider logs.
+
+With no runs yet, the page shows the server's actual database path and a copyable wrapper template using absolute executable/CLI/database paths. Select macOS/Linux or PowerShell, copy, and replace the trailing `COMMAND` with real work and its arguments. The template stays local, works from another directory, and disappears when a run is selected or the connection is lost. Copying does not execute anything or create training runs. Windows Command Prompt is not supported by this template; use PowerShell or the CLI argument-array interface.
 
 To select a database from any working directory:
 

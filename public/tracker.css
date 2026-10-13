@@ -20,5 +20,15 @@
 .tracker-setup p { color: var(--slate); font-size: 13px; line-height: 1.8; }
 .tracker-setup pre { background: rgb(248 251 251 / 55%); padding: 18px; overflow-x: auto; font-size: 12px; border: 1px solid var(--line); }
 .tracker-setup a { color: var(--navy); font-size: 13px; text-underline-offset: 4px; }
+.setup-database code { display: block; overflow-wrap: anywhere; font-size: 12px; }
+.setup-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 20px; margin-top: 18px; }
+.setup-actions label { font-size: 13px; color: var(--slate); }
+.setup-actions select, .setup-actions button { font: inherit; color: var(--navy); background: var(--ice); border: 1px solid var(--line); padding: 9px 12px; }
+.setup-actions select { margin-left: 8px; }
+.setup-actions button { cursor: pointer; font-size: 13px; }
+.setup-actions button:disabled { opacity: .5; cursor: default; }
+.setup-actions :focus-visible { outline: 2px solid var(--navy); outline-offset: 3px; }
+#copy-status { color: var(--slate); font-size: 12px; }
+#setup-command { white-space: pre-wrap; overflow-wrap: anywhere; }
 .tracker-footer { display: flex; gap: 16px; justify-content: space-between; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 18px; color: var(--slate); font-size: 11px; }
 @media (max-width: 620px) { .tracker-main { padding-top: 32px; } .tracker-facts { grid-template-columns: 1fr 1fr; row-gap: 24px; } .tracker-toolbar { flex-wrap: wrap; } .masthead { gap: 16px; } .source-switch { flex-wrap: wrap; } }

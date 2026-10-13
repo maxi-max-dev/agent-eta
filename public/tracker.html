@@ -30,9 +30,15 @@
   </section>
   <section class="tracker-setup" id="setup" hidden>
     <h2>把一条真实命令接进来</h2>
-    <p>在同一个仓库目录另开终端，把 COMMAND 换成实际命令：</p>
-    <pre><code>node bin/agent-eta.js run --profile my-agent --class coding -- COMMAND</code></pre>
-    <p>跨目录时，启动页面和运行命令都指定同一个 <code>--db</code> 绝对路径。也可让 Agent 阅读 <code>skills/agent-eta/SKILL.md</code>。</p>
+    <p>把下面的模板交给有终端能力的 Agent，将末尾 COMMAND 换成实际命令及参数。运行后，这个页面会自动显示状态。</p>
+    <p class="setup-database">本页使用的数据库 <code id="setup-database">正在读取…</code></p>
+    <div class="setup-actions">
+      <label>终端类型 <select id="setup-shell"><option value="posix">macOS / Linux</option><option value="powershell">PowerShell</option></select></label>
+      <button id="copy-command" type="button" disabled>复制命令模板</button>
+      <span id="copy-status" role="status" aria-live="polite"></span>
+    </div>
+    <pre><code id="setup-command">正在确认安装位置和数据库…</code></pre>
+    <p>模板已固定安装位置和数据库，换目录也能接到本页。将 <code>my-agent</code> 换成稳定的工作流名；没有同类历史时会先显示状态，不编造时间。命令模板含本机路径，请留在本地。</p>
     <a href="/demo">先看合成演示 →</a>
   </section>
   <footer class="tracker-footer"><span>本机保存 · 无上传</span><span>每 5 秒重算 ≠ Agent 有新进展</span><span>预测时间不能代替任务验收</span></footer>

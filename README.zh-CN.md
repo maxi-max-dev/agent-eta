@@ -4,7 +4,7 @@
 
 在本机记录有明确边界的 Agent 运行，结合相似历史估计剩余时间。提供命令行、JavaScript 接口和可携带的 Skill，无需账号、API Key 或运行依赖。
 
-这是 **v0.8.0 实验版本**：接入、状态、估计和前瞻评测可用，跨用户的预测准确度尚未建立。它不判断 Agent 的答案或代码是否合格。
+这是 **v0.9.0 实验版本**：接入、状态、估计和前瞻评测可用，跨用户的预测准确度尚未建立。它不判断 Agent 的答案或代码是否合格。
 
 ## 两分钟跑起来
 
@@ -23,7 +23,7 @@ node bin/agent-eta.js run --profile wiring-test --class coding -- node -e "setTi
 也可从固定 GitHub 版本直接运行，需要 npm 和 Git，首次会下载包：
 
 ```sh
-npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.8.0 -- agent-eta --help
+npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.9.0 -- agent-eta --help
 ```
 
 当前只发布 GitHub，没有发布到 npm registry。
@@ -63,6 +63,8 @@ node bin/agent-eta.js finish RUN_ID --outcome succeeded
 工作时约每 30 秒上报 `ping`，等人前 `pause`，恢复后 `resume`。失败/取消用 `--outcome failed` / `cancelled`。`watch RUN_ID --interval 5` 持续刷新，`list` 查看近期运行。默认数据库在当前目录 `.agent-eta/runs.sqlite`；跨目录必须每条命令传同一个 `--db /绝对路径/runs.sqlite`，或统一设置 `AGENT_ETA_TRACKER_DB`。
 
 ## 为什么一开始可能没有数字
+
+第一次打开看板时，空页面会显示实际数据库位置和可复制的命令模板。选择 macOS/Linux 或 PowerShell，复制后把末尾 `COMMAND` 换成真实命令及参数即可；模板已固定安装和数据库路径，换目录也能接到同一页。复制本身不会执行任务或生成训练数据；断连时会隐藏旧模板。Windows 请用 PowerShell，这个模板不适用于 cmd.exe。
 
 | 情况 | 行为 |
 | --- | --- |
