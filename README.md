@@ -6,7 +6,7 @@ Local, experimental runtime estimates for agents. Track a bounded run and see re
 
 [中文说明](README.zh-CN.md) · [Agent skill](skills/agent-eta/SKILL.md) · [Roadmap](ROADMAP.md)
 
-> **v0.9.1 is experimental.** Runtime visibility and prospective evaluation work; general prediction accuracy is not established. This tool does not validate the quality of an agent's work.
+> **v0.9.2 is experimental.** Runtime visibility and prospective evaluation work; general prediction accuracy is not established. This tool does not validate the quality of an agent's work.
 
 ## Run in two minutes
 
@@ -25,7 +25,7 @@ That short command checks wiring, not accuracy. Replace everything after `--` wi
 Or use the pinned GitHub package (Git and npm required; first use downloads it):
 
 ```sh
-npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.9.1 -- agent-eta --help
+npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.9.2 -- agent-eta --help
 ```
 
 There is no npm registry release. The package is marked private to prevent accidental registry publication; GitHub distribution is supported.
@@ -82,7 +82,7 @@ tracker.finish(runId, 'succeeded'); // Only after the operation actually finishe
 tracker.close();
 ```
 
-See [the runnable SDK wiring example](examples/sdk.mjs).
+See [the runnable SDK wiring example](examples/sdk.mjs). Its copyable `runWithTracking` recipe isolates tracking and reporting failures from the operation: a failed heartbeat stops further heartbeat attempts, terminal writes are best effort, and the operation retains its own return value or original error. Failure notices mean tracking is incomplete; a failed terminal write is not a saved completion. This is example code, not an additional package SDK export. See [the integration boundaries](docs/ONBOARDING.md#sdk-example-failure-handling).
 
 ## Understand the estimate
 

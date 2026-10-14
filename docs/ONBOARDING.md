@@ -36,3 +36,20 @@ On 2026-10-13, the current Codex task invoked the published v0.8.0 wrapper for t
 Release acceptance exercises a clean package through independent CLI invocations across directories, a synchronous process wrapper, and the JavaScript SDK. It checks the same run IDs/store, cold start, explicit pause/resume/outcomes, child output and exit codes, and the local dashboard HTTP API. Synthetic and short wiring runs are kept in isolated directories/profiles and are not accuracy data.
 
 These are portable invocation patterns plus the one specifically bounded host case above, not three independently tested agent products. No new vendor-native hook, chat-only model, independent novice-user study, or unattended collection service is certified by this release. Historical project acceptance remains separate; this onboarding check does not erase it. Independent future holdout collection and general prediction accuracy remain pending.
+
+
+## SDK example failure handling
+
+Starting with v0.9.2, [the runnable SDK example](../examples/sdk.mjs) contains a copyable `runWithTracking(operation, options)` recipe. It creates and closes its own tracker, begins tracking before invoking the operation, and records the returned or thrown outcome afterwards. `profile`, `taskClass` and `filename` select the same scope and store as the lower-level SDK. Its default profile is `sdk-wiring-example`; choose a stable real-work profile when adapting it. The recipe is example code, not a new `agent-eta` package export; the `AgentETA` methods still expose their own errors to callers.
+
+Tracking failures are separate from the operation's outcome:
+
+- If tracking cannot start, emit an incomplete-tracking notice and still invoke the operation once. A partially written start is possible if storage fails mid-call; do not infer that no record exists.
+- If a heartbeat fails, report it and stop that timer. Do not invent replacement observations. The operation continues, and its actual finish is attempted afterwards.
+- A failed final write does not become a saved success/failure. The local row may remain running and later become stale. Inspect the store before making a completion claim.
+- The operation's exact return value or original thrown value is preserved even if final reporting also fails. Status/warning callbacks, including rejected promises, do not replace that outcome.
+- Clear the timer and close any successfully constructed tracker after the operation settles. This also happens when the operation throws. There is no automatic retry, database repair, deletion or upload.
+
+The default callbacks print status and fixed-stage incomplete-tracking notices without logging the operation's inputs, output or error. A returned operation value alone is not quality acceptance. The recipe does not automatically detect human waiting, cancellation, remote work after a launcher exits, or CPU work that blocks JavaScript's event loop; use explicit lower-level lifecycle calls or an appropriate process boundary for those cases. Callback delivery is best effort and is not awaited as part of operation completion.
+
+Acceptance uses isolated synthetic wiring and SQLite write failures: a healthy operation returns its value, heartbeat/final-write failure leaves the work running to completion without claiming a saved terminal state, and a business error survives simultaneous reporting failure unchanged. These are fault-handling checks, not new real-user, vendor-native or prediction-accuracy evidence.

@@ -4,7 +4,7 @@
 
 在本机记录有明确边界的 Agent 运行，结合相似历史估计剩余时间。提供命令行、JavaScript 接口和可携带的 Skill，无需账号、API Key 或运行依赖。
 
-这是 **v0.9.1 实验版本**：接入、状态、估计和前瞻评测可用，跨用户的预测准确度尚未建立。它不判断 Agent 的答案或代码是否合格。
+这是 **v0.9.2 实验版本**：接入、状态、估计和前瞻评测可用，跨用户的预测准确度尚未建立。它不判断 Agent 的答案或代码是否合格。
 
 ## 两分钟跑起来
 
@@ -23,7 +23,7 @@ node bin/agent-eta.js run --profile wiring-test --class coding -- node -e "setTi
 也可从固定 GitHub 版本直接运行，需要 npm 和 Git，首次会下载包：
 
 ```sh
-npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.9.1 -- agent-eta --help
+npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.9.2 -- agent-eta --help
 ```
 
 当前只发布 GitHub，没有发布到 npm registry。
@@ -97,7 +97,7 @@ node bin/agent-eta.js serve --db /绝对路径/runs.sqlite --port 4318
 
 停止演示后运行 `npm run start:live` 可明确开启实验性的本机 Codex 日志观察。此接入依赖日志格式；Claude 解析目前仅用于诊断。通用运行与 Codex 观察现在共用网页入口，各自保留清楚的数据来源。 任务/项目层暂不承诺可靠数字。
 
-JavaScript 接入见 [英文 README](README.md#javascript-sdk)，可运行例子见 [examples/sdk.mjs](examples/sdk.mjs)。
+JavaScript 接入见 [英文 README](README.md#javascript-sdk)，可运行例子见 [examples/sdk.mjs](examples/sdk.mjs)。示例中的 `runWithTracking` 可复制改用：跟踪或输出故障会单独报告，心跳写入失败后停止重试，原任务保留自己的返回值或原始错误。出现跟踪不完整提示时，不能把业务完成说成已保存终态。它是示例代码，没有增加包的 SDK 导出；具体边界见[接入说明](docs/ONBOARDING.md#sdk-example-failure-handling)。
 
 ## 留下当时的预测，之后才知道准不准
 
