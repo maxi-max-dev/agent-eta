@@ -6,7 +6,7 @@ Local, experimental runtime estimates for agents. Track a bounded run and see re
 
 [中文说明](README.zh-CN.md) · [Agent skill](skills/agent-eta/SKILL.md) · [Roadmap](ROADMAP.md)
 
-> **v0.9.2 is experimental.** Runtime visibility and prospective evaluation work; general prediction accuracy is not established. This tool does not validate the quality of an agent's work.
+> **v0.10.0 is experimental.** Runtime visibility and prospective evaluation work; general prediction accuracy is not established. This tool does not validate the quality of an agent's work.
 
 ## Run in two minutes
 
@@ -25,7 +25,7 @@ That short command checks wiring, not accuracy. Replace everything after `--` wi
 Or use the pinned GitHub package (Git and npm required; first use downloads it):
 
 ```sh
-npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.9.2 -- agent-eta --help
+npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.10.0 -- agent-eta --help
 ```
 
 There is no npm registry release. The package is marked private to prevent accidental registry publication; GitHub distribution is supported.
@@ -202,6 +202,8 @@ node bin/agent-eta.js export --db /absolute/path/runs.sqlite
 `export` streams a single snapshot as JSONL, preserving every portable run and receipt, original prediction JSON, frozen baseline and insertion order. It ends with counts and a SHA-256 completion marker. Redirect stdout to a new local file if needed; an interrupted stream without a matching completion marker is incomplete. Both commands are read-only, create no missing database, and upload nothing. Exports contain local metadata and are not anonymized. The original records remain in place.
 
 See [the journal contract and retention choices](docs/JOURNAL.md). Default retention keeps everything. No automatic expiry or pruning is enabled, and the prediction algorithm is unchanged.
+
+After saving an export, check the existing file with `node bin/agent-eta.js verify-export /absolute/path/journal.jsonl`. Exit 0 and `status: complete` confirm its envelope, order, row counts and original-byte checksum; truncation, extra content and mismatches exit 1. This reads only the named file and takes no `--db`. It does not check forecast validity, compare with the original database or prove the export command succeeded; retain that command's exit status separately. File integrity does not establish real collection or accuracy. See [saved-export verification](docs/JOURNAL.md#verify-a-saved-export).
 
 ## Development and evidence
 

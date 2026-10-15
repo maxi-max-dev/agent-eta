@@ -4,7 +4,7 @@
 
 在本机记录有明确边界的 Agent 运行，结合相似历史估计剩余时间。提供命令行、JavaScript 接口和可携带的 Skill，无需账号、API Key 或运行依赖。
 
-这是 **v0.9.2 实验版本**：接入、状态、估计和前瞻评测可用，跨用户的预测准确度尚未建立。它不判断 Agent 的答案或代码是否合格。
+这是 **v0.10.0 实验版本**：接入、状态、估计和前瞻评测可用，跨用户的预测准确度尚未建立。它不判断 Agent 的答案或代码是否合格。
 
 ## 两分钟跑起来
 
@@ -23,7 +23,7 @@ node bin/agent-eta.js run --profile wiring-test --class coding -- node -e "setTi
 也可从固定 GitHub 版本直接运行，需要 npm 和 Git，首次会下载包：
 
 ```sh
-npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.9.2 -- agent-eta --help
+npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.10.0 -- agent-eta --help
 ```
 
 当前只发布 GitHub，没有发布到 npm registry。
@@ -173,6 +173,14 @@ node bin/agent-eta.js export --db /绝对路径/runs.sqlite
 `export` 以 JSONL 流式导出同一快照里的全部通用运行和预测，保留原始 JSON、当时的基线和插入顺序，最后附条数与 SHA-256 完成标记。需要保存时，将 stdout 重定向到新的本地文件；中断或缺少匹配完成标记的输出不能算完整导出。两个命令都只读、不创建缺失数据库、不上传，也不删除原记录。导出含本机元数据，未自动脱敏。
 
 完整格式及保留期限选项见 [记录导出与用量说明](docs/JOURNAL.md)。默认全部保留；未开启自动过期或清理，本轮也不改变预测算法。
+
+保存导出后，可直接检查已有文件：
+
+```sh
+node bin/agent-eta.js verify-export /绝对路径/journal.jsonl
+```
+
+退出码为 0、结果为 `complete`，表示文件格式、顺序、实际条数和原始字节摘要匹配；截断、多余内容或不匹配会退出 1。命令只读这个文件，不接收 `--db`，也不改写、修复或上传内容。它不检查预测是否有效、不对照原数据库，也不能证明当时导出命令成功，请另行保留导出的退出状态。文件完整不等于数据来源真实或模型准确，详见[导出校验说明](docs/JOURNAL.md#verify-a-saved-export)。
 
 ## 数据与验证
 

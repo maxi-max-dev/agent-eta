@@ -30,6 +30,20 @@ If externally modified columns contain BLOBs or nonfinite numbers that JSON cann
 
 Exports contain local run/profile metadata. They are not anonymized or automatically safe to publish. The exporter itself stores no new prompts or commands and does not send a file anywhere.
 
+## Verify a saved export
+
+Starting with v0.10.0, check an existing file directly:
+
+```sh
+node bin/agent-eta.js verify-export /absolute/path/journal-2026-10-10.jsonl
+```
+
+Use the installed CLI's absolute path when outside the checkout. `verify-export` takes one file path and no database options. The legacy `agentwhen` command also supports it. It ignores database environment variables, opens no SQLite connection, creates no files and changes no input bytes.
+
+Exit 0 and `status: complete` mean the file has a supported manifest, runs followed by forecasts in their original increasing insertion order, matching manifest/end/actual counts, exactly one final completion marker, and a matching SHA-256 of the original bytes before that marker. Every line, including the final marker, must end with LF. The checker streams the file, retaining at most one line plus read buffers rather than the whole journal; memory use still depends on the largest row. It rejects truncated output, appended content, altered counts, unsupported envelopes, invalid UTF-8 and checksum mismatches. Failures produce an error on stderr and exit 1, with no success report. It does not repair an export.
+
+`complete` describes this file's integrity only. The report explicitly leaves `forecastValidity` and `sourceDatabase` as `not_checked`, and `exportProcessExit` as `not_observed`: retain the original export command's successful exit separately. An existing file cannot prove what process produced it. Damaged inner `payload_json`, orphan receipts and unknown forecast states remain preserved evidence and are not evaluated here. A recomputed digest can describe edited data; it cannot establish authenticity, independent collection or accuracy. Keep both the original database and the verified export privately.
+
 ## Storage contract: `agent-eta.usage/1`
 
 | Field | Meaning |

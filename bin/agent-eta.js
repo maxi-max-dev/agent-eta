@@ -8,6 +8,7 @@ import { pipeline } from 'node:stream/promises';
 import { AgentETA, defaultDatabasePath } from '../src/generic/tracker.js';
 import { evaluateDatabase } from '../src/generic/evaluate.js';
 import { exportJournal, journalUsage } from '../src/generic/journal.js';
+import { verifyJournalExport } from '../src/generic/verify-journal.js';
 import { compareDatabase } from '../src/generic/compare.js';
 import { createCohortPlan, compareCohortDatabase, readCohortPlan } from '../src/generic/cohort.js';
 import { createGatePlan, assessGateDatabase, readGatePlan } from '../src/generic/gate.js';
@@ -15,7 +16,7 @@ import { diagnose } from '../src/generic/doctor.js';
 
 const HELP = `Agent ETA — How long will your agent take?
 
-Usage: agent-eta <command> [run-id] [options]
+Usage: agent-eta <command> [run-id | export-file] [options]
   start                   Begin a run; returns JSON with runId
   status <id>             Read a fresh estimate (does not send a heartbeat)
   list                    Read the latest 50 runs
@@ -27,6 +28,7 @@ Usage: agent-eta <command> [run-id] [options]
   gate-plan               Freeze review targets, scope and a fresh future window (JSON)
   gate                    Check a completed holdout against its gate plan (read-only)
   export                  Stream the full portable journal as JSONL (read-only)
+  verify-export <file>    Check saved JSONL order, counts and checksum (read-only)
   usage                   Show record counts and database/WAL file bytes (read-only)
   ping <id>               Report that the caller is still active
   pause <id>              Stop active time while waiting for input
@@ -118,11 +120,12 @@ try {
   if (values.help || !command || command === 'help') {
     process.stdout.write(HELP);
   } else {
-    const known = ['start', 'status', 'list', 'ping', 'pause', 'resume', 'finish', 'watch', 'run', 'serve', 'evaluate', 'export', 'usage', 'compare', 'cohort-plan', 'gate-plan', 'gate', 'doctor'];
+    const known = ['start', 'status', 'list', 'ping', 'pause', 'resume', 'finish', 'watch', 'run', 'serve', 'evaluate', 'export', 'verify-export', 'usage', 'compare', 'cohort-plan', 'gate-plan', 'gate', 'doctor'];
     if (!known.includes(command)) throw new Error('Unknown command; use --help');
     const requiresId = !['start', 'list', 'run', 'serve', 'evaluate', 'export', 'usage', 'compare', 'cohort-plan', 'gate-plan', 'gate', 'doctor'].includes(command);
     if (positionals.length !== (requiresId ? 2 : 1)) throw new Error('Unexpected or missing argument; use --help');
     if (boundary >= 0 && command !== 'run') throw new Error('-- is only supported with run');
+    if (command === 'verify-export' && Object.keys(values).length) throw new Error('verify-export takes only a saved export file; no database options');
     const interval = Number(values.interval ?? 5);
     if (!Number.isFinite(interval) || interval < 1 || interval > 30) throw new Error('Interval must be between 1 and 30 seconds');
     if (values.outcome && command !== 'finish') throw new Error('--outcome is only supported with finish');
@@ -135,7 +138,8 @@ try {
     if ((values['holdout-start'] !== undefined || values['holdout-end'] !== undefined) && !['cohort-plan', 'gate-plan'].includes(command)) {
       throw new Error('--holdout-start and --holdout-end are only supported with cohort-plan/gate-plan');
     }
-    if (command === 'doctor') {
+    if (command === 'verify-export') emit(await verifyJournalExport(id));
+    else if (command === 'doctor') {
       const result = diagnose({ filename: values.db, profile: values.profile, taskClass: values.class, port: Number(values.port ?? 4318) });
       emit(result);
       if (result.status === 'blocked') process.exitCode = 1;
