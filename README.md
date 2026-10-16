@@ -6,7 +6,7 @@ Local, experimental runtime estimates for agents. Track a bounded run and see re
 
 [中文说明](README.zh-CN.md) · [Agent skill](skills/agent-eta/SKILL.md) · [Roadmap](ROADMAP.md)
 
-> **v0.10.0 is experimental.** Runtime visibility and prospective evaluation work; general prediction accuracy is not established. This tool does not validate the quality of an agent's work.
+> **v0.11.0 is experimental.** Runtime visibility and prospective evaluation work; general prediction accuracy is not established. This tool does not validate the quality of an agent's work.
 
 ## Run in two minutes
 
@@ -25,7 +25,7 @@ That short command checks wiring, not accuracy. Replace everything after `--` wi
 Or use the pinned GitHub package (Git and npm required; first use downloads it):
 
 ```sh
-npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.10.0 -- agent-eta --help
+npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.11.0 -- agent-eta --help
 ```
 
 There is no npm registry release. The package is marked private to prevent accidental registry publication; GitHub distribution is supported.
@@ -99,7 +99,11 @@ See [the runnable SDK wiring example](examples/sdk.mjs). Its copyable `runWithTr
 
 Three runs are an engineering threshold, **not statistical validation**. Quantiles have `calibrated: false`; P80 is not a guaranteed 80% success rate. Predictions may increase as a run outlives shorter examples. Long tasks may be badly underestimated. Changed workflows or poorly chosen cohorts can invalidate comparisons. Active minutes exclude future human waiting and do not guarantee a wall-clock arrival time.
 
-## Visual demo and experimental Codex observer
+## Portable walkthrough, dashboard and experimental Codex observer
+
+To see the portable lifecycle and saved evidence before connecting a real task, run `npm run demo:portable` from the checkout. It demonstrates cold start, experimental estimates, pause, observation gaps, terminal status and reproducible reports in a fresh temporary store. All clocks, histories and outcomes are explicitly synthetic; it ignores configured databases and does not establish accuracy. See the [three-minute walkthrough](docs/PORTABLE-DEMO.md) for the presentation sequence, installed-package command and artifact inspection.
+
+To open the existing web dashboard:
 
 ```sh
 npm start

@@ -1,6 +1,6 @@
 {
   "name": "agent-eta",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "private": true,
   "type": "module",
   "description": "How long will your agent take? Local runtime estimates with a portable CLI, JavaScript SDK and agent skill.",
@@ -21,6 +21,7 @@
     "scan:live:import": "node --no-warnings scripts/scan-live.js --days=30 --import",
     "start:live": "node --no-warnings src/server/main.js",
     "demo": "node --no-warnings scripts/start-demo.js",
+    "demo:portable": "node --no-warnings examples/portable-demo.mjs",
     "cli": "node --no-warnings bin/agent-eta.js"
   },
   "engines": {

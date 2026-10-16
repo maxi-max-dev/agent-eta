@@ -4,7 +4,7 @@
 
 在本机记录有明确边界的 Agent 运行，结合相似历史估计剩余时间。提供命令行、JavaScript 接口和可携带的 Skill，无需账号、API Key 或运行依赖。
 
-这是 **v0.10.0 实验版本**：接入、状态、估计和前瞻评测可用，跨用户的预测准确度尚未建立。它不判断 Agent 的答案或代码是否合格。
+这是 **v0.11.0 实验版本**：接入、状态、估计和前瞻评测可用，跨用户的预测准确度尚未建立。它不判断 Agent 的答案或代码是否合格。
 
 ## 两分钟跑起来
 
@@ -23,7 +23,7 @@ node bin/agent-eta.js run --profile wiring-test --class coding -- node -e "setTi
 也可从固定 GitHub 版本直接运行，需要 npm 和 Git，首次会下载包：
 
 ```sh
-npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.10.0 -- agent-eta --help
+npm exec --yes --package=github:maxi-max-dev/agent-eta#v0.11.0 -- agent-eta --help
 ```
 
 当前只发布 GitHub，没有发布到 npm registry。
@@ -80,6 +80,14 @@ node bin/agent-eta.js finish RUN_ID --outcome succeeded
 **3 次只是工程门槛，不代表准确。** 输出标记 `calibrated: false`，P80 不是已验证的 80% 保证。预测剩余活跃时间，未来等人多久并不知道。任务比历史更长时，剩余时间可能增加；长任务低估仍是重点问题。
 
 ## 看得见的演示
+
+想先理解通用接口，可以在仓库里运行：
+
+```sh
+npm run demo:portable
+```
+
+几秒内依次看到冷启动、实验预测、暂停、终态、过期和观测中断，并留下可复算的评测、比较与已校验导出。演示总是新建临时数据库，不读取当前目录或环境变量指定的原库；全部历史、时间和结果都明确标为合成数据，不计入真实精度。详见[三分钟演示讲解与产物说明](docs/PORTABLE-DEMO.md)。这条命令是终端演示；下面的命令打开已有网页看板。
 
 ```sh
 npm start
